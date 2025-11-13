@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Activaciones de kioskos • TurnoLite</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --screen-grad-top:#0073d6; --screen-grad-bot:#005bb8;
+      --card-bg:#ffffff; --card-text:#1c2b3b; --shadow:0 8px 18px rgba(0,0,0,.2);
+      --r-lg:18px; --r-xl:22px; --primary:#27ae60;
+      --input-bg:#eaf3ff; --input-bd:#d3deef;
+      --err-bg:rgba(255,90,90,.08); --err-bd:rgba(255,90,90,.25); --err-tx:#ff8b8b;
+      --muted:#5a6b7c;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Montserrat",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff}
+    .screen{min-height:100dvh;background:linear-gradient(180deg,var(--screen-grad-top),var(--screen-grad-bot));
+      padding:40px 24px;display:flex;align-items:flex-start;justify-content:center}
+    .container{width:min(1200px,100%);display:flex;flex-direction:column;gap:22px}
+    .page-title{font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:32px;margin:0 4px}
+    .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .token-pill{display:flex;align-items:center;gap:10px;background:var(--input-bg);border:1px solid var(--input-bd);
+      border-radius:999px;padding:10px 14px;color:#123057}
+    .token-pill input{border:none;outline:none;background:transparent;color:#123057;font-weight:700;min-width:280px}
+    .btn{border:none;border-radius:999px;padding:12px 16px;font-weight:800;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.25)}
+    .btn--primary{background:var(--primary);color:#fff}
+    .btn--ghost{background:#ffffff;color:#0f7fe5;border:2px solid #0d6bd6}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+    .card{background:var(--card-bg);color:var(--card-text);border-radius:var(--r-xl);box-shadow:var(--shadow);padding:22px}
+    .card h2{margin:0 0 10px;font-size:22px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    .card p{margin:0 0 8px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+    .input{flex:1;min-width:180px;background:var(--input-bg);border:1px solid var(--input-bd);border-radius:12px;
+      padding:10px 12px;color:#123057;font-weight:700}
+    .hint{font-size:12px;color:#1c2b3b;opacity:.75;margin-top:6px}
+    .err{display:none;margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--err-bg);border:1px solid var(--err-bd);color:var(--err-tx);font-weight:700}
+    .ok{display:none;margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(39,174,96,.1);
+      border:1px solid rgba(39,174,96,.35);color:#13824a;font-weight:700}
+    .table{width:100%;border-collapse:separate;border-spacing:0 10px}
+    .table th{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#2b3f57;text-align:left;padding:0 10px}
+    .table td{background:#f7fbff;color:#0a1f35;padding:12px 10px;border-top:1px solid #e1ecf7;border-bottom:1px solid #e1ecf7}
+    .table tr td:first-child{border-left:1px solid #e1ecf7;border-top-left-radius:12px;border-bottom-left-radius:12px}
+    .table tr td:last-child{border-right:1px solid #e1ecf7;border-top-right-radius:12px;border-bottom-right-radius:12px}
+    .badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800}
+    .badge--ok{background:#eafaf1;color:#13824a;border:1px solid rgba(39,174,96,.35)}
+    .badge--off{background:#fff3f2;color:#b03a2e;border:1px solid rgba(231,76,60,.35)}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,Monaco,monospace}
+    .copy{cursor:pointer;font-size:12px;color:#0f7fe5;font-weight:800;margin-left:8px}
+    @media (max-width: 1024px){.grid{grid-template-columns:1fr} .token-pill input{min-width:200px}}
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <div class="container">
+      <div class="toolbar">
+        <h1 class="page-title">ACTIVACIONES DE KIOSKOS</h1>
+        <div class="token-pill" title="Si tu API requiere token admin, pégalo aquí">
+          <span>Token admin</span>
+          <input id="admin-token" type="text" placeholder="Opcional: Bearer para endpoints /api/kiosk/*" />
+          <button class="btn btn--ghost" id="btn-save-token">Guardar</button>
+        </div>
+        <button class="btn btn--ghost" id="btn-refresh">Actualizar listado</button>
+      </div>
+
+      <div class="grid">
+        <!-- Generar token -->
+        <div class="card">
+          <h2>Generar token de activación</h2>
+          <p>Emite un nuevo código para un kiosko.</p>
+          <div class="row">
+            <input id="req-kiosko"  class="input mono" placeholder="kioskoId (ej: mostrador_01)" />
+            <input id="req-cliente" class="input mono" placeholder="clienteId (ej: farmacia_central)" />
+            <input id="req-sucursal" class="input mono" placeholder="sucursalId (ej: sucursal_001)" />
+          </div>
+          <div class="row">
+            <button class="btn btn--primary" id="btn-request">Generar token</button>
+          </div>
+          <div class="err" id="req-err"></div>
+          <div class="ok"  id="req-ok"></div>
+          <p class="hint">Usa el token en un tablet con <strong>inicio.html</strong> para activarlo por primera vez.</p>
+        </div>
+
+        <!-- Desactivar kiosko -->
+        <div class="card">
+          <h2>Desactivar kiosko</h2>
+          <p>Invalida el dispositivo activo asociado a un kiosko.</p>
+          <div class="row">
+            <input id="deact-kiosko" class="input mono" placeholder="kioskoId a desactivar" />
+            <button class="btn btn--primary" id="btn-deactivate">Desactivar</button>
+          </div>
+          <div class="err" id="deact-err"></div>
+          <div class="ok"  id="deact-ok"></div>
+          <p class="hint">El tablet perderá permisos y volverá a <strong>inicio.html</strong> al siguiente request.</p>
+        </div>
+      </div>
+
+      <!-- Listado -->
+      <div class="card">
+        <h2>Listado de kioskos</h2>
+        <p id="list-hint" class="hint">Si tu API no implementa <span class="mono">GET /api/kiosk/list</span>, usa los formularios de arriba.</p>
+        <div class="err" id="list-err"></div>
+        <div class="ok"  id="list-ok" style="display:none"></div>
+
+        <div id="list-empty" class="hint" style="display:none">Sin datos para mostrar.</div>
+        <div id="list-wrap" style="overflow:auto">
+          <table class="table" id="list-table" aria-label="Listado de kioskos" style="min-width:880px">
+            <thead>
+              <tr>
+                <th>Kiosko</th>
+                <th>Cliente</th>
+                <th>Sucursal</th>
+                <th>Estado</th>
+                <th>Activado</th>
+                <th>Último ping</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="list-body">
+              <!-- filas dinámicas -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ===== Config =====
+    const API_BASE = 'https://api-turnos-mamq.onrender.com'; // <-- ajusta si corresponde
+    const ADMIN_TOKEN_KEY = 'turnoliteAdminToken';
+
+    const ENDPOINTS = {
+      list: API_BASE + '/api/kiosk/list',                  // opcional (si no existe, se mostrará un aviso)
+      request: API_BASE + '/api/kiosk/request-activation', // POST {kioskoId, clienteId, sucursalId}
+      deactivate: API_BASE + '/api/kiosk/deactivate',      // POST {kioskoId}
+      status: API_BASE + '/api/kiosk/status'               // opcional: GET ?kioskoId=...
+    };
+
+    // ===== Helpers =====
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    const fmtDT = iso => {
+      if (!iso) return '';
+      try {
+        return new Date(iso).toLocaleString('es-CL', {
+          day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'
+        }).replace(',', '');
+      } catch { return iso; }
+    };
+    function getAdminToken(){ try { return localStorage.getItem(ADMIN_TOKEN_KEY) || ''; } catch { return ''; } }
+    function setAdminToken(v){ try { localStorage.setItem(ADMIN_TOKEN_KEY, v||''); } catch {} }
+
+    async function fetchJSON(url, opts = {}) {
+      const headers = new Headers(opts.headers || {});
+      const admin = getAdminToken();
+      if (admin) headers.set('Authorization', 'Bearer ' + admin);
+      if (opts.method && opts.method.toUpperCase() !== 'GET' && !headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
+      }
+      const res = await fetch(url, { ...opts, headers });
+      let data = null;
+      try { data = await res.json(); } catch {}
+      if (!res.ok) {
+        const msg = (data && (data.error || data.message)) || ('HTTP ' + res.status);
+        throw new Error(msg);
+      }
+      return data;
+    }
+
+    function copy(text){
+      try{
+        navigator.clipboard.writeText(text);
+        return true;
+      } catch { return false; }
+    }
+
+    // ===== UI wiring: admin token =====
+    (function initAdminToken(){
+      const input = $('#admin-token');
+      input.value = getAdminToken();
+      $('#btn-save-token').onclick = () => {
+        setAdminToken(input.value.trim());
+        $('#list-ok').textContent = 'Token guardado.';
+        $('#list-ok').style.display = 'block';
+        setTimeout(() => $('#list-ok').style.display = 'none', 1500);
+      };
+    })();
+
+    // ===== Generar token de activación =====
+    $('#btn-request').onclick = async () => {
+      const kioskoId = $('#req-kiosko').value.trim();
+      const clienteId = $('#req-cliente').value.trim();
+      const sucursalId = $('#req-sucursal').value.trim();
+      $('#req-err').style.display = 'none'; $('#req-ok').style.display = 'none';
+
+      if (!kioskoId || !clienteId || !sucursalId) {
+        $('#req-err').textContent = 'Completa kioskoId, clienteId y sucursalId.';
+        $('#req-err').style.display = 'block';
+        return;
+      }
+      try {
+        const data = await fetchJSON(ENDPOINTS.request, {
+          method: 'POST',
+          body: JSON.stringify({ kioskoId, clienteId, sucursalId })
+        });
+        // Esperado: { token, activationUrl, deactivationUrl, expiresAt? }
+        const lines = [];
+        if (data.token) lines.push(`Token: <span class="mono">${data.token}</span> <span class="copy" data-copy="${data.token}">copiar</span>`);
+        if (data.activationUrl) lines.push(`URL activación: <span class="mono">${data.activationUrl}</span> <span class="copy" data-copy="${data.activationUrl}">copiar</span>`);
+        if (data.deactivationUrl) lines.push(`URL desactivación: <span class="mono">${data.deactivationUrl}</span> <span class="copy" data-copy="${data.deactivationUrl}">copiar</span>`);
+        if (data.expiresAt) lines.push(`Expira: ${fmtDT(data.expiresAt)}`);
+
+        $('#req-ok').innerHTML = lines.join('<br>');
+        $('#req-ok').style.display = 'block';
+
+        // Delegación de clicks para copiar
+        $('#req-ok').onclick = (ev) => {
+          const el = ev.target.closest('[data-copy]');
+          if (!el) return;
+          if (copy(el.getAttribute('data-copy'))) el.textContent = 'copiado';
+        };
+      } catch (e) {
+        $('#req-err').textContent = e.message || 'No fue posible generar el token.';
+        $('#req-err').style.display = 'block';
+      }
+    };
+
+    // ===== Desactivar kiosko =====
+    $('#btn-deactivate').onclick = async () => {
+      const kioskoId = $('#deact-kiosko').value.trim();
+      $('#deact-err').style.display = 'none'; $('#deact-ok').style.display = 'none';
+      if (!kioskoId) {
+        $('#deact-err').textContent = 'Indica un kioskoId para desactivar.';
+        $('#deact-err').style.display = 'block';
+        return;
+      }
+      try {
+        await fetchJSON(ENDPOINTS.deactivate, {
+          method: 'POST',
+          body: JSON.stringify({ kioskoId })
+        });
+        $('#deact-ok').textContent = `Kiosko ${kioskoId} desactivado correctamente.`;
+        $('#deact-ok').style.display = 'block';
+        loadKiosks();
+      } catch (e) {
+        $('#deact-err').textContent = e.message || 'No fue posible desactivar.';
+        $('#deact-err').style.display = 'block';
+      }
+    };
+
+    // ===== Listado de kioskos (opcional) =====
+    async function loadKiosks() {
+      $('#list-err').style.display = 'none';
+      $('#list-ok').style.display = 'none';
+      $('#list-empty').style.display = 'none';
+      const tbody = $('#list-body');
+      tbody.innerHTML = '';
+
+      try {
+        const items = await fetchJSON(ENDPOINTS.list); // esperado: [{kioskoId, clienteId, sucursalId, status, activatedAt, lastSeenAt}, ...]
+        if (!items || !items.length) {
+          $('#list-empty').style.display = 'block';
+          return;
+        }
+        for (const it of items) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="mono">${it.kioskoId || it.kiosko_id || ''}</td>
+            <td class="mono">${it.clienteId || it.cliente_id || ''}</td>
+            <td class="mono">${it.sucursalId || it.sucursal_id || ''}</td>
+            <td>${renderStatus(it.status || it.state)}</td>
+            <td>${fmtDT(it.activatedAt || it.activated_at)}</td>
+            <td>${fmtDT(it.lastSeenAt || it.last_seen_at)}</td>
+            <td class="actions">
+              <button class="btn btn--ghost" data-act="gen" data-k="${it.kioskoId || it.kiosko_id}">Generar token</button>
+              <button class="btn btn--primary" data-act="off" data-k="${it.kioskoId || it.kiosko_id}">Desactivar</button>
+            </td>`;
+          tbody.appendChild(tr);
+        }
+
+        // Acciones de la tabla
+        tbody.onclick = async (ev) => {
+          const b = ev.target.closest('button[data-act]');
+          if (!b) return;
+          const act = b.getAttribute('data-act');
+          const k = b.getAttribute('data-k');
+          if (!k) return;
+
+          if (act === 'off') {
+            try {
+              await fetchJSON(ENDPOINTS.deactivate, { method:'POST', body: JSON.stringify({ kioskoId: k }) });
+              $('#list-ok').textContent = `Kiosko ${k} desactivado.`;
+              $('#list-ok').style.display = 'block';
+              loadKiosks();
+            } catch (e) {
+              $('#list-err').textContent = e.message || 'No se pudo desactivar.';
+              $('#list-err').style.display = 'block';
+            }
+          } else if (act === 'gen') {
+            // Requiere conocer clienteId/sucursalId para ese kiosko
+            const row = b.closest('tr');
+            const cliente = row.children[1].textContent.trim();
+            const sucursal = row.children[2].textContent.trim();
+            try {
+              const data = await fetchJSON(ENDPOINTS.request, {
+                method:'POST',
+                body: JSON.stringify({ kioskoId: k, clienteId: cliente, sucursalId: sucursal })
+              });
+              const parts = [];
+              if (data.token) parts.push(`Token: ${data.token}`);
+              if (data.activationUrl) parts.push(`URL activación: ${data.activationUrl}`);
+              alert(parts.join('\n') || 'Token generado.');
+            } catch (e) {
+              $('#list-err').textContent = e.message || 'No se pudo generar token.';
+              $('#list-err').style.display = 'block';
+            }
+          }
+        };
+
+      } catch (e) {
+        // Si /api/kiosk/list no existe o devuelve error, mostramos aviso y salimos silenciosamente
+        $('#list-err').textContent = e.message || 'Listado no disponible en esta API.';
+        $('#list-err').style.display = 'block';
+      }
+    }
+
+    function renderStatus(s) {
+      const ok = String(s||'').toLowerCase();
+      if (ok === 'active' || ok === 'activo' || ok === 'on') {
+        return `<span class="badge badge--ok">ACTIVO</span>`;
+      }
+      return `<span class="badge badge--off">INACTIVO</span>`;
+    }
+
+    // Toolbar refresh
+    $('#btn-refresh').onclick = loadKiosks;
+
+    // Boot
+    loadKiosks();
+  </script>
+</body>
+</html>
