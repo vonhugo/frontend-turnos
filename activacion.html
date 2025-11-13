@@ -59,7 +59,12 @@
         <h1 class="page-title">ACTIVACIONES DE KIOSKOS</h1>
         <div class="token-pill" title="Si tu API requiere token admin, pégalo aquí">
           <span>Token admin</span>
-          <input id="admin-token" type="text" placeholder="Opcional: Bearer para endpoints /api/kiosk/*" />
+          <input
+            id="admin-token"
+            type="password"
+            autocomplete="off"
+            placeholder="Opcional: Bearer para endpoints /api/kiosk/*"
+          />
           <button class="btn btn--ghost" id="btn-save-token">Guardar</button>
         </div>
         <button class="btn btn--ghost" id="btn-refresh">Actualizar listado</button>
