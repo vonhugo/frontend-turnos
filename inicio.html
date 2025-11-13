@@ -22,7 +22,11 @@
       background:#29a37e; color:#0b0c10; font-weight:700; margin-top:12px;
     }
     button:disabled{ opacity:.6; cursor:not-allowed; }
-    .err { color:#ff8b8b; margin-top:10px; display:none; }
+    .err {
+      color:#ffb4b4; margin-top:10px; display:none;
+      background: rgba(255,90,90,.08); border:1px solid rgba(255,90,90,.25);
+      padding:10px 12px; border-radius:10px;
+    }
     .info{ font-size:13px; opacity:.85; margin-top:10px; display:none; text-align:center; }
   </style>
 </head>
@@ -45,9 +49,20 @@
     const DEVICE_TOKEN_KEY = 'turnoliteDeviceToken';
 
     // ===== Storage helpers =====
-    const getDeviceToken   = () => { try { return localStorage.getItem(DEVICE_TOKEN_KEY) } catch { return null } };
-    const setDeviceToken   = (t)  => { try { localStorage.setItem(DEVICE_TOKEN_KEY, t) } catch {} };
-    const clearDeviceToken = ()   => { try { localStorage.removeItem(DEVICE_TOKEN_KEY) } catch {} };
+    const getDeviceToken   = () => { try { return localStorage.getItem(DEVICE_TOKEN_KEY); } catch { return null; } };
+    const setDeviceToken   = (t)  => { try { localStorage.setItem(DEVICE_TOKEN_KEY, t); } catch {} };
+    const clearDeviceToken = ()   => { try { localStorage.removeItem(DEVICE_TOKEN_KEY); } catch {} };
+
+    // ===== Util: formato dd/mm/aaaa hh:mm (hora local) =====
+    function formatDateTime(iso) {
+      try {
+        const d = new Date(iso);
+        return d.toLocaleString('es-CL', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        }).replace(',', '');
+      } catch { return null; }
+    }
 
     // ===== Validación del token existente (contra endpoint protegido) =====
     async function validateToken(deviceToken) {
@@ -69,7 +84,7 @@
         // Cualquier 2xx se considera válido para esta verificación
         return res.status >= 200 && res.status < 300;
       } catch {
-        // Si no hay red, no afirmamos validez → pedimos activación para evitar falsos positivos
+        // Sin red → no aseguramos validez
         return false;
       }
     }
@@ -94,12 +109,39 @@
           body: JSON.stringify({ token })
         });
         const data = await resp.json().catch(() => ({}));
-        if (!resp.ok || !data.deviceToken) {
-          throw new Error(data?.error || 'No fue posible activar (token inválido, usado o expirado).');
+
+        if (!resp.ok) {
+          const code = data?.error || 'ACTIVATION_FAILED';
+          if (code === 'TOKEN_ALREADY_USED') {
+            const cuando = data?.usedAt ? formatDateTime(data.usedAt) : null;
+            elErr.textContent = cuando
+              ? `Este código ya fue usado y se encuentra activo desde el ${cuando}.`
+              : 'Este código ya fue usado y se encuentra activo.';
+            elErr.style.display = 'block';
+            return;
+          }
+          if (code === 'TOKEN_EXPIRED') {
+            elErr.textContent = 'Este código expiró. Solicita uno nuevo.';
+            elErr.style.display = 'block';
+            return;
+          }
+          if (code === 'INVALID_TOKEN') {
+            elErr.textContent = 'El código ingresado no es válido.';
+            elErr.style.display = 'block';
+            return;
+          }
+          elErr.textContent = `No fue posible activar: ${code}.`;
+          elErr.style.display = 'block';
+          return;
+        }
+
+        if (!data?.deviceToken) {
+          throw new Error('Respuesta incompleta del servidor.');
         }
 
         setDeviceToken(data.deviceToken);
-        // Validación inmediata por si el kiosko fue desactivado al instante
+
+        // Validación inmediata por robustez
         const ok = await validateToken(data.deviceToken);
         if (!ok) throw new Error('No se pudo validar la credencial emitida.');
 
@@ -107,8 +149,9 @@
         window.location.replace('index.html');
       } catch (e) {
         clearDeviceToken();
-        elErr.textContent = e.message || 'Error de activación.';
-        elErr.style.display = 'block';
+        const msg = (e && e.message) ? e.message : 'Error de activación.';
+        document.getElementById('msg-err').textContent = msg;
+        document.getElementById('msg-err').style.display = 'block';
       } finally {
         btn.disabled = false;
       }
