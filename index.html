@@ -4,7 +4,24 @@
   <meta charset="UTF-8" />
   <title>Pantalla de Turnos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+	<script>
+	(function () {
+	  var KEY = 'turnoliteDeviceToken';  // Usa el MISMO key que en inicio.html
+	  try {
+		var t = localStorage.getItem(KEY);
+		if (!t) {
+		  // Si quieres, pasa ?next=index.html para volver tras activar
+		  var back = encodeURIComponent((location.pathname || '/index.html').replace(/^\//,''));
+		  location.replace('inicio.html?next=' + back);
+		  return;
+		}
+		// Deja a mano el token por si quieres usarlo en otros scripts
+		window.__TURNOLITE_TOKEN__ = t;
+	  } catch (e) {
+		location.replace('inicio.html');
+	  }
+	})();
+	</script>
   <!-- Fuente -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
 
@@ -1663,5 +1680,76 @@
     console.log('[turnolite] interfaz lista (vista por panel derecho).');
   })();
   </script>
+  <!-- === Helpers de autenticación (Authorization: Bearer <deviceToken>) === -->
+	<script>
+	(function () {
+	  var KEY = 'turnoliteDeviceToken';
+
+	  function getToken() {
+		try { return window.__TURNOLITE_TOKEN__ || localStorage.getItem(KEY); }
+		catch { return null; }
+	  }
+
+	  function ensureToken() {
+		var t = getToken();
+		if (!t) {
+		  try { localStorage.removeItem(KEY); } catch {}
+		  location.replace('inicio.html');
+		  throw new Error('NO_DEVICE_TOKEN');
+		}
+		return t;
+	  }
+
+	  async function fetchWithAuth(url, options) {
+		options = options || {};
+		var t = ensureToken();
+		var headers = new Headers(options.headers || {});
+		if (!headers.has('Authorization')) headers.set('Authorization', 'Bearer ' + t);
+		// Si envías body y no especificaste content-type, asumimos JSON
+		if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+		return fetch(url, { ...options, headers });
+	  }
+
+	  async function postJsonAuth(url, body, extra) {
+		const opts = { method: 'POST', body: JSON.stringify(body || {}), ...(extra || {}) };
+		const res = await fetchWithAuth(url, opts);
+		let data = null;
+		try { data = await res.json(); } catch {}
+		if (!res.ok) throw new Error((data && data.error) || ('HTTP_' + res.status));
+		return data || {};
+	  }
+
+		// ANTES: (tenías un fetch directo a HEALTH_METRICS_URL sin Authorization)
+		// function reportHealthMetric(pingMs) { ... }
+
+		//
+		// DESPUÉS (si prefieres mantener el nombre antiguo en tu bloque):
+		//
+		function reportHealthMetric(pingMs) {
+		  // delega en el override que firma con Authorization
+		  return window.reportHealthMetric(pingMs);
+		}
+
+
+	  // --- OVERRIDE: enviarTurno → usa Authorization y payload mínimo ---
+	  window.enviarTurno = async function (tipo, valor) {
+		if (!window.API_URL) return null;
+
+		const payload = { tipo: String(tipo).toUpperCase() };
+		if (payload.tipo === 'NOMBRE')       payload.nombre  = valor;
+		else if (payload.tipo === 'CELULAR') payload.celular = valor;
+		else if (payload.tipo === 'RUT')     payload.rut     = valor;
+
+		try {
+		  const data = await postJsonAuth(window.API_URL, payload);
+		  return (data && data.turno) ? data.turno : null;
+		} catch (e) {
+		  console.error('[turnolite] Error API enviarTurno:', e && e.message);
+		  return null;
+		}
+	  };
+	})();
+	</script>
+
 </body>
 </html>
