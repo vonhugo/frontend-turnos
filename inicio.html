@@ -23,7 +23,7 @@
     }
     button:disabled{ opacity:.6; cursor:not-allowed; }
     .err { color:#ff8b8b; margin-top:10px; display:none; }
-    .hint{ font-size:12px; opacity:.75; margin-top:8px }
+    .info{ font-size:13px; opacity:.85; margin-top:10px; display:none; text-align:center; }
   </style>
 </head>
 <body>
@@ -36,7 +36,7 @@
     <button id="btn-activate">Activar</button>
 
     <div id="msg-err" class="err"></div>
-    <div class="hint">Si este dispositivo ya está activado, te redirigiremos automáticamente.</div>
+    <div id="msg-info" class="info">Validando credencial existente…</div>
   </div>
 
   <script>
@@ -48,6 +48,31 @@
     const getDeviceToken   = () => { try { return localStorage.getItem(DEVICE_TOKEN_KEY) } catch { return null } };
     const setDeviceToken   = (t)  => { try { localStorage.setItem(DEVICE_TOKEN_KEY, t) } catch {} };
     const clearDeviceToken = ()   => { try { localStorage.removeItem(DEVICE_TOKEN_KEY) } catch {} };
+
+    // ===== Validación del token existente (contra endpoint protegido) =====
+    async function validateToken(deviceToken) {
+      try {
+        const res = await fetch(API_BASE + '/api/health-metric', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + deviceToken },
+          body: JSON.stringify({
+            pingMs: 1,
+            healthUrl: API_BASE + '/api/health',
+            page: location.href,
+            userAgent: navigator.userAgent,
+            screenWidth:  window.screen.width,
+            screenHeight: window.screen.height,
+            timestamp: new Date().toISOString(),
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || null
+          })
+        });
+        // Cualquier 2xx se considera válido para esta verificación
+        return res.status >= 200 && res.status < 300;
+      } catch {
+        // Si no hay red, no afirmamos validez → pedimos activación para evitar falsos positivos
+        return false;
+      }
+    }
 
     // ===== Activación con token humano =====
     async function activateWithToken(rawToken) {
@@ -73,8 +98,12 @@
           throw new Error(data?.error || 'No fue posible activar (token inválido, usado o expirado).');
         }
 
-        // Guardar credencial del dispositivo y redirigir al sistema
         setDeviceToken(data.deviceToken);
+        // Validación inmediata por si el kiosko fue desactivado al instante
+        const ok = await validateToken(data.deviceToken);
+        if (!ok) throw new Error('No se pudo validar la credencial emitida.');
+
+        // Redirigir al sistema de turnos
         window.location.replace('index.html');
       } catch (e) {
         clearDeviceToken();
@@ -85,22 +114,30 @@
       }
     }
 
-    // ===== Boot: si ya hay credenciales, redirigir; si no, solicitar token =====
-    (function boot() {
-      // 1) Detectar si ya hay credenciales
-      const existing = getDeviceToken();
-      if (existing) {
-        // 2) Si existen, redirigir automáticamente a index.html
-        window.location.replace('index.html');
-        return;
-      }
-
-      // 3) Si no existen, preparar UI para solicitar y registrar
-      // Prefill opcional si viene ?k=TOKEN en la URL (útil al abrir desde un QR)
+    // ===== Boot =====
+    (async function boot() {
+      // Prefill opcional desde ?k=TOKEN o ?token=TOKEN (si abres desde un QR que lo traiga)
       const params = new URLSearchParams(window.location.search);
       const k = params.get('k') || params.get('token');
       if (k) document.getElementById('token').value = k.toUpperCase();
 
+      // 1) Detectar si ya hay credenciales
+      const existing = getDeviceToken();
+      if (existing) {
+        // 2) Validar y redirigir si es correcto
+        const info = document.getElementById('msg-info');
+        info.style.display = 'block';
+        const ok = await validateToken(existing);
+        if (ok) {
+          window.location.replace('index.html');
+          return;
+        }
+        // Si no valida, limpiar y mostrar UI de activación
+        clearDeviceToken();
+        info.style.display = 'none';
+      }
+
+      // 3) Solicitar e instalar credenciales
       document.getElementById('btn-activate').onclick = () =>
         activateWithToken(document.getElementById('token').value);
 
