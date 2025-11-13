@@ -119,6 +119,7 @@
                 <th>Sucursal</th>
                 <th>Estado</th>
                 <th>Activado</th>
+                <th>Desactivado</th>
                 <th>Último ping</th>
                 <th>Acciones</th>
               </tr>
@@ -266,7 +267,8 @@
       tbody.innerHTML = '';
 
       try {
-        const items = await fetchJSON(ENDPOINTS.list); // esperado: [{kioskoId, clienteId, sucursalId, status, activatedAt, lastSeenAt}, ...]
+        // esperado: [{kioskoId, clienteId, sucursalId, status, activatedAt, deactivatedAt?, lastSeenAt}, ...]
+        const items = await fetchJSON(ENDPOINTS.list);
         if (!items || !items.length) {
           $('#list-empty').style.display = 'block';
           return;
@@ -279,6 +281,7 @@
             <td class="mono">${it.sucursalId || it.sucursal_id || ''}</td>
             <td>${renderStatus(it.status || it.state)}</td>
             <td>${fmtDT(it.activatedAt || it.activated_at)}</td>
+            <td>${fmtDT(it.deactivatedAt || it.deactivated_at)}</td>
             <td>${fmtDT(it.lastSeenAt || it.last_seen_at)}</td>
             <td class="actions">
               <button class="btn btn--ghost" data-act="gen" data-k="${it.kioskoId || it.kiosko_id}">Generar token</button>
