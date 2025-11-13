@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Módulo 2 - Panel de Turnos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --screen-bg-top: #0073d6;
+      --screen-bg-bottom: #005bb8;
+      --panel-blue: #0f7fe5;
+      --panel-green: #27ae60;
+      --text-light: #f4f8ff;
+      --text-dark: #1c2b3b;
+      --card-bg: #ffffff;
+      --accent-red: #e53935;
+      --outline-blue: #0f7fe5;
+      --shadow-soft: 0 10px 24px rgba(0, 0, 0, 0.35);
+      --radius-xl: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, var(--screen-bg-top) 0%, var(--screen-bg-bottom) 100%);
+      color: var(--text-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .screen {
+      width: 100%;
+      max-width: 1100px;
+      padding: 24px 20px;
+    }
+
+    /* Cabecera */
+    .panel-header {
+      background: var(--panel-blue);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      padding: 16px 24px;
+      text-align: center;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .panel-header__title {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 34px);
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-light);
+    }
+
+    /* Bloque verde (estado actual) */
+    .current-call {
+      background: var(--panel-green);
+      border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+      margin-top: 6px;
+      padding: 18px 20px 18px;
+      text-align: center;
+      color: #ffffff;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .current-call__label {
+      margin: 0 0 6px;
+      font-size: clamp(18px, 2.4vw, 32px);
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .current-call__name {
+      margin: 0 0 10px;
+      font-size: clamp(22px, 3.2vw, 40px);
+      font-weight: 800;
+      min-height: 1.2em;
+    }
+
+    .current-call__times {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      font-size: clamp(14px, 1.8vw, 22px);
+      font-weight: 600;
+      flex-wrap: wrap;
+    }
+
+    .current-call__times span {
+      position: relative;
+      padding: 0 10px;
+    }
+
+    .current-call__times span + span::before {
+      content: "";
+      position: absolute;
+      left: -14px;
+      top: 50%;
+      height: 18px;
+      width: 2px;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Tarjeta lista de espera */
+    .waitlist-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-xl);
+      margin-top: 16px;
+      padding: 18px 18px 20px;
+      color: var(--text-dark);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .waitlist-card__header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 10px;
+    }
+
+    .waitlist-card__title {
+      margin: 0;
+      font-size: clamp(16px, 2.2vw, 22px);
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    /* Contenedor tabla */
+    .waitlist-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table.waitlist {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: clamp(13px, 1.8vw, 18px);
+    }
+
+    .waitlist thead th {
+      text-align: left;
+      padding: 8px 4px;
+      font-weight: 700;
+      border-bottom: 2px solid #e2e6f0;
+    }
+
+    .waitlist tbody td {
+      padding: 8px 4px;
+      border-bottom: 1px solid #edf0fa;
+    }
+
+    .waitlist tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .waitlist__name   { width: 25%; }
+    .waitlist__type   { width: 25%; }
+    .waitlist__wait   { width: 20%; }
+    .waitlist__status { width: 30%; }
+
+    .tag-preferencial {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      color: var(--accent-red);
+      white-space: nowrap;
+    }
+
+    .tag-preferencial__icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent-red);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* celda estado con acción inline */
+    .waitlist__status--action {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      white-space: nowrap;
+    }
+
+    .btn-inline-rejoin {
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: clamp(11px, 1.6vw, 14px);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border: 2px solid var(--outline-blue);
+      background: #ffffff;
+      color: var(--outline-blue);
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+
+    .btn-inline-rejoin:focus-visible {
+      outline: 3px solid rgba(15, 127, 229, 0.4);
+      outline-offset: 2px;
+    }
+
+    /* botones inferiores */
+    .waitlist-card__actions {
+      display: flex;
+      gap: 14px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1 1 0;
+      border-radius: 16px;
+      padding: 12px 10px;
+      font-size: clamp(14px, 1.9vw, 18px);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: center;
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .btn--next {
+      background: var(--panel-green);
+      color: #ffffff;
+    }
+
+    .btn--attended {
+      background: var(--panel-blue);
+      color: #ffffff;
+    }
+
+    /* Ajustes móviles / tablet vertical */
+    @media (max-width: 768px) {
+      body {
+        align-items: flex-start;
+      }
+
+      .screen {
+        padding: 16px 10px;
+      }
+
+      .panel-header {
+        padding-inline: 16px;
+      }
+
+      .current-call {
+        padding-inline: 14px;
+      }
+
+      .current-call__times {
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .waitlist-card {
+        padding-inline: 12px;
+      }
+
+      .waitlist-card__header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .waitlist-card__actions {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+        flex: 1 1 auto;
+      }
+    }
+
+    /* Versión "tarjetas" para la tabla en pantallas estrechas */
+    @media (max-width: 640px) {
+      table.waitlist {
+        min-width: 0;
+      }
+
+      .waitlist thead {
+        display: none;
+      }
+
+      .waitlist,
+      .waitlist tbody,
+      .waitlist tr {
+        display: block;
+        width: 100%;
+      }
+
+      .waitlist tr {
+        border-bottom: 2px solid #edf0fa;
+        margin-bottom: 8px;
+        padding: 4px 0;
+      }
+
+      .waitlist tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 0;
+        border-bottom: none;
+      }
+
+      .waitlist tbody td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        margin-right: 8px;
+        color: #555f6f;
+        flex: 0 0 45%;
+      }
+
+      .waitlist__status--action {
+        justify-content: space-between;
+      }
+
+      .tag-preferencial {
+        max-width: 55%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .screen {
+        padding: 12px 6px;
+      }
+
+      .current-call__times span + span::before {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <header class="panel-header">
+      <h1 class="panel-header__title">MÓDULO 2</h1>
+    </header>
+
+    <section class="current-call" aria-labelledby="calling-title">
+      <!-- Estado inicial: ATENDIENDO / JUAN P. -->
+      <p id="calling-title" class="current-call__label">ATENDIENDO</p>
+      <p class="current-call__name">JUAN P.</p>
+      <div class="current-call__times">
+        <span>12:45 min</span>
+        <span>02:34 min</span>
+      </div>
+    </section>
+
+    <section class="waitlist-card" aria-labelledby="waitlist-title">
+      <div class="waitlist-card__header">
+        <h2 id="waitlist-title" class="waitlist-card__title">LISTA DE ESPERA</h2>
+        <!-- Eliminado: Tiempo de espera -->
+      </div>
+
+      <div class="waitlist-wrapper">
+        <table class="waitlist" aria-label="Lista de espera">
+          <thead>
+            <tr>
+              <th class="waitlist__name">Nombre</th>
+              <th class="waitlist__type">Atención</th>
+              <th class="waitlist__wait">Espera</th>
+              <th class="waitlist__status">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="waitlist__name" data-label="Nombre">Ana M.</td>
+              <td class="waitlist__type" data-label="Atención">
+                <span class="tag-preferencial">
+                  <span class="tag-preferencial__icon">A</span>
+                  Preferencial
+                </span>
+              </td>
+              <td class="waitlist__wait" data-label="Espera">06.12</td>
+              <td class="waitlist__status" data-label="Estado">Esperando</td>
+            </tr>
+            <tr>
+              <td class="waitlist__name" data-label="Nombre">Carlos R.</td>
+              <td class="waitlist__type" data-label="Atención">Normal</td>
+              <td class="waitlist__wait" data-label="Espera">04.25</td>
+              <td class="waitlist__status" data-label="Estado">Esperando</td>
+            </tr>
+            <tr>
+              <td class="waitlist__name" data-label="Nombre">Maria S.</td>
+              <td class="waitlist__type" data-label="Atención">No se presentó</td>
+              <td class="waitlist__wait" data-label="Espera">–</td>
+              <td class="waitlist__status waitlist__status--action" data-label="Estado">
+                <button type="button" class="btn-inline-rejoin">Reintegrar a fila</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="waitlist-card__actions">
+        <button
+          type="button"
+          id="btn-next"
+          class="btn btn--next"
+          disabled
+        >
+          Llamar siguiente
+        </button>
+
+        <button
+          type="button"
+          id="btn-attended"
+          class="btn btn--attended"
+        >
+          Marcar atendido
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Referencias de UI
+    const btnNext = document.getElementById('btn-next');
+    const btnAttended = document.getElementById('btn-attended');
+    const callLabel = document.getElementById('calling-title');
+    const callName  = document.querySelector('.current-call__name');
+
+    // Estados posibles
+    const State = {
+      ATTENDING: 'ATTENDING',   // ATENDIENDO
+      AVAILABLE: 'AVAILABLE',   // DISPONIBLE
+      CALLING:   'CALLING'      // LLAMANDO
+    };
+
+    let currentState = State.ATTENDING;
+
+    // Stubs para backend (a reemplazar por llamadas reales)
+    function onMarkAttended() {
+      console.log('[TODO] Backend: marcar como atendido');
+    }
+
+    function onCallNext() {
+      console.log('[TODO] Backend: llamar siguiente');
+    }
+
+    function onStartAttention() {
+      console.log('[TODO] Backend: empezar a atender');
+    }
+
+    function onNoShow() {
+      console.log('[TODO] Backend: marcar no se presentó');
+    }
+
+    // Función central para actualizar la UI según el estado
+    function setState(nextState) {
+      currentState = nextState;
+
+      switch (currentState) {
+        case State.ATTENDING:
+          callLabel.textContent = 'ATENDIENDO';
+          // callName.textContent = 'JUAN P.'; // nombre real desde backend
+          btnNext.textContent = 'Llamar siguiente';
+          btnNext.disabled = true;
+
+          btnAttended.textContent = 'Marcar atendido';
+          btnAttended.disabled = false;
+          break;
+
+        case State.AVAILABLE:
+          callLabel.textContent = 'DISPONIBLE';
+          callName.textContent = '';
+
+          btnNext.textContent = 'Llamar siguiente';
+          btnNext.disabled = false;
+
+          btnAttended.textContent = 'Marcar atendido';
+          btnAttended.disabled = true;
+          break;
+
+        case State.CALLING:
+          callLabel.textContent = 'LLAMANDO';
+          callName.textContent = '';
+
+          btnNext.textContent = 'Empezar a atender';
+          btnNext.disabled = false;
+
+          btnAttended.textContent = 'No se presentó';
+          btnAttended.disabled = false;
+          break;
+      }
+    }
+
+    // Listeners de botones
+    btnAttended.addEventListener('click', () => {
+      if (currentState === State.ATTENDING) {
+        onMarkAttended();
+        setState(State.AVAILABLE);
+      } else if (currentState === State.CALLING) {
+        onNoShow();
+        setState(State.AVAILABLE);
+      }
+    });
+
+    btnNext.addEventListener('click', () => {
+      if (currentState === State.AVAILABLE) {
+        onCallNext();
+        setState(State.CALLING);
+      } else if (currentState === State.CALLING) {
+        onStartAttention();
+        setState(State.ATTENDING);
+      }
+    });
+
+    // Estado inicial coherente
+    setState(State.ATTENDING);
+  </script>
+</body>
+</html>
