@@ -4,24 +4,25 @@
   <meta charset="UTF-8" />
   <title>Pantalla de Turnos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-	<script>
-	(function () {
-	  var KEY = 'turnoliteDeviceToken';  // Usa el MISMO key que en inicio.html
-	  try {
-		var t = localStorage.getItem(KEY);
-		if (!t) {
-		  // Si quieres, pasa ?next=index.html para volver tras activar
-		  var back = encodeURIComponent((location.pathname || '/index.html').replace(/^\//,''));
-		  location.replace('inicio.html?next=' + back);
-		  return;
-		}
-		// Deja a mano el token por si quieres usarlo en otros scripts
-		window.__TURNOLITE_TOKEN__ = t;
-	  } catch (e) {
-		location.replace('inicio.html');
-	  }
-	})();
-	</script>
+
+  <!-- Guard: si no hay token → ir a inicio.html -->
+  <script>
+  (function () {
+    var KEY = 'turnoliteDeviceToken';
+    try {
+      var t = localStorage.getItem(KEY);
+      if (!t) {
+        var back = encodeURIComponent((location.pathname || '/index.html').replace(/^\//,''));
+        location.replace('inicio.html?next=' + back);
+        return;
+      }
+      window.__TURNOLITE_TOKEN__ = t; // a mano para otros scripts
+    } catch (e) {
+      location.replace('inicio.html');
+    }
+  })();
+  </script>
+
   <!-- Fuente -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
 
@@ -66,13 +67,10 @@
       box-sizing: border-box;
     }
 
-    /* Layout principal:
-       Columna izquierda (LLAMANDO AHORA + ÚLTIMOS LLAMADOS) más angosta,
-       columna derecha (TOMA TU TURNO) más ancha, como en el prototipo */
     .main-layout {
       flex: 1;
       display: grid;
-      grid-template-columns: 0.8fr 1.6fr; /* izquierda ~1/3, derecha ~2/3 */
+      grid-template-columns: 0.8fr 1.6fr;
       gap: 32px;
       align-items: stretch;
       min-height: 0;
@@ -83,7 +81,7 @@
       min-height: 0;
     }
 
-    /* LLAMANDO AHORA (izquierda) */
+    /* LLAMANDO AHORA */
     .current-call {
       flex: 0 0 auto;
       background: var(--current-call-bg);
@@ -95,615 +93,128 @@
       box-shadow: var(--shadow-soft);
       margin-bottom: 18px;
     }
-    .current-call__label {
-      font-size: 42px;
-      font-weight: 700;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      margin-bottom: 24px;
-    }
-    .current-call__name {
-      font-size: 54px;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-    .current-call__module {
-      font-size: 32px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
+    .current-call__label { font-size: 42px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 24px; }
+    .current-call__name  { font-size: 54px; font-weight: 800; margin-bottom: 6px; }
+    .current-call__module{ font-size: 32px; font-weight: 700; text-transform: uppercase; }
 
-    /* ÚLTIMOS LLAMADOS (izquierda) */
-    .latest-calls {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    .latest-calls__title {
-      text-align: center;
-      font-size: 42px;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--header-text);
-      margin: 0 0 18px;
-    }
-    .latest-calls__list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .call-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 24px;
-      border-radius: var(--border-radius-lg);
-      font-size: 32px;
-      font-weight: 700;
-      box-shadow: 0 4px 10px rgba(0,0,0,.18);
-    }
-    .call-row--active {
-      background: var(--row-active-bg);
-      color: var(--row-active-text);
-    }
-    .call-row--default {
-      background: var(--row-bg);
-      color: var(--row-text);
-    }
-    .call-row__name {
-      flex: 1;
-    }
-    .call-row__module {
-      flex: 0 0 auto;
-      margin-left: 16px;
-    }
+    /* ÚLTIMOS LLAMADOS */
+    .latest-calls { flex: 1; display: flex; flex-direction: column; }
+    .latest-calls__title { text-align: center; font-size: 42px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--header-text); margin: 0 0 18px; }
+    .latest-calls__list  { display: flex; flex-direction: column; gap: 10px; }
+    .call-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-radius: var(--border-radius-lg); font-size: 32px; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,.18); }
+    .call-row--active  { background: var(--row-active-bg); color: var(--row-active-text); }
+    .call-row--default { background: var(--row-bg); color: var(--row-text); }
+    .call-row__name   { flex: 1; }
+    .call-row__module { flex: 0 0 auto; margin-left: 16px; }
 
-    /* Panel derecho: TOMA TU TURNO */
-    .take-turn {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-    }
-    .take-turn__card {
-      background: var(--card-bg);
-      border-radius: var(--border-radius-xl);
-      padding: 30px 32px 36px;
-      box-shadow: var(--shadow-soft);
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      height: 100%;
-    }
-    .take-turn__title {
-      text-align: center;
-      font-size: 42px;
-      font-weight: 800;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: #1c2b3b;
-      margin-bottom: 4px;
-    }
+    /* TOMA TU TURNO */
+    .take-turn { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
+    .take-turn__card { background: var(--card-bg); border-radius: var(--border-radius-xl); padding: 30px 32px 36px; box-shadow: var(--shadow-soft); display: flex; flex-direction: column; gap: 24px; height: 100%; }
+    .take-turn__title { text-align: center; font-size: 42px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #1c2b3b; margin-bottom: 4px; }
 
     .turno-view[hidden] { display: none; }
 
-    .take-turn__subtitle {
-      text-align: center;
-      font-size: 22px;
-      font-weight: 700;
-      color: #1c2b3b;
-      margin: 0 0 8px;
-    }
-    .take-turn__description {
-      text-align: center;
-      font-size: 20px;
-      font-weight: 500;
-      color: #1c2b3b;
-      margin: 0 0 18px;
-    }
+    .take-turn__subtitle    { text-align: center; font-size: 22px; font-weight: 700; color: #1c2b3b; margin: 0 0 8px; }
+    .take-turn__description { text-align: center; font-size: 20px; font-weight: 500; color: #1c2b3b; margin: 0 0 18px; }
 
-    /* Opciones del menú */
-    .take-turn__options {
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
-    }
+    .take-turn__options { display: flex; flex-direction: column; gap: 22px; }
+    .option { border-radius: var(--border-radius-lg); padding: 16px 26px; display: flex; align-items: center; gap: 24px; font-size: 32px; font-weight: 600; cursor: pointer; transition: transform .15s ease-out, box-shadow .15s ease-out; }
+    .option:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,.25); }
+    .option__text { flex: 1; line-height: 1.2; }
+    .option__subtitle { display: block; font-size: 22px; font-weight: 500; opacity: .85; }
+    .option__arrow { font-size: 34px; font-weight: 700; }
+    .option--pref { background: var(--primary-option-bg); color: var(--primary-option-text); border: 2px solid #0d6bd6; }
+    .option--cell { background: #f0f6ff; color: #123057; border: 2px solid #d0e2ff; }
+    .option--name { background: #ffe6f1; color: #311323; border: 2px solid #ffc2dd; }
 
-    .option {
-      border-radius: var(--border-radius-lg);
-      padding: 16px 26px;
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      font-size: 32px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform .15s ease-out, box-shadow .15s ease-out;
-    }
-    .option:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 14px rgba(0,0,0,.25);
-    }
-    .option__text {
-      flex: 1;
-      line-height: 1.2;
-    }
-    .option__subtitle {
-      display: block;
-      font-size: 22px;
-      font-weight: 500;
-      opacity: .85;
-    }
-    .option__arrow {
-      font-size: 34px;
-      font-weight: 700;
-    }
+    @keyframes option-hint-pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); } 50% { transform: scale(1.04); box-shadow: 0 0 0 6px rgba(255,255,255,.7), 0 8px 18px rgba(0,0,0,.35); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
+    .option--hint { animation: option-hint-pulse .9s ease-out; }
 
-    .option--pref {
-      background: var(--primary-option-bg);
-      color: var(--primary-option-text);
-      border: 2px solid #0d6bd6;
-    }
-    .option--cell {
-      background: #f0f6ff;
-      color: #123057;
-      border: 2px solid #d0e2ff;
-    }
-    .option--name {
-      background: #ffe6f1;
-      color: #311323;
-      border: 2px solid #ffc2dd;
-    }
+    .qr-icon, .pref-icon, .idcard-icon { width: 64px; height: 64px; flex: 0 0 auto; padding: 0; background: transparent; border-radius: 0; box-shadow: none; display: flex; align-items: center; justify-content: center; }
+    .qr-icon svg, .pref-icon svg, .idcard-icon svg { width: 100%; height: 100%; display: block; }
+    .option--pref .pref-icon svg * { fill: #ffffff !important; stroke: none !important; }
+    .option--cell .qr-icon { color: #000000; }
+    .option--name .idcard-icon svg { fill: none; stroke: #e08abc; stroke-width: 2.2; }
+    .option--name .idcard-icon svg .badge { fill: #f8c0d8; stroke: none; }
 
-    /* Animación hint */
-    @keyframes option-hint-pulse {
-      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
-      50% { transform: scale(1.04); box-shadow: 0 0 0 6px rgba(255,255,255,.7), 0 8px 18px rgba(0,0,0,.35); }
-      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
-    }
-    .option--hint {
-      animation: option-hint-pulse .9s ease-out;
-    }
+    .person-icon { width: 94px; height: 94px; flex: 0 0 auto; background: #ffffff; border-radius: 100px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+    .person-icon__inner { width: 61px; height: 61px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #ff6b6b 0, #e63757 40%, #b3203a 100%); position: relative; }
+    .person-icon__inner::before, .person-icon__inner::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%); background: #f2f2f2; }
+    .person-icon__inner::before { top: 7px; width: 18px; height: 18px; border-radius: 50%; }
+    .person-icon__inner::after  { bottom: 4px; width: 28px; height: 14px; border-radius: 14px 14px 8px 8px; }
 
-    /* Iconos principales de las opciones */
-    .qr-icon, .pref-icon, .idcard-icon {
-	  width: 64px;
-	  height: 64px;
-	  flex: 0 0 auto;
-	  padding: 0;
-	  background: transparent;
-	  border-radius: 0;
-	  box-shadow: none;
-	  display: flex;
-	  align-items: center;
-	  justify-content: center;
-	}
-	.qr-icon svg, .pref-icon svg, .idcard-icon svg {
-	  width: 100%;
-	  height: 100%;
-	  display: block;
-	}
-	
-	/* Colores y trazos como en el mockup */
-	.option--pref .pref-icon svg * { fill: #ffffff !important; stroke: none !important; } /* silla de ruedas blanca sobre botón azul */
-	
-	.option--cell .qr-icon {
-	  color: #000000; /* el trazo del SVG usa currentColor */
-	}
-	
-	.option--name .idcard-icon svg { fill: none; stroke: #e08abc; stroke-width: 2.2; }
-	.option--name .idcard-icon svg .badge { fill: #f8c0d8; stroke: none; } /* rellenos suaves rosados */
+    .name-input-row { display: flex; align-items: center; gap: 14px; background: #eaf3ff; border-radius: 999px; padding: 14px 22px; box-shadow: 0 2px 4px rgba(0,0,0,.08) inset; width: 60%; max-width: 420px; margin: 0 auto 16px; }
+    .name-input-row .person-icon { width: 50px; height: 50px; box-shadow: none; }
+    .name-input-row__display { flex: 1; font-size: 26px; font-family: inherit; font-weight: 600; color: #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .name-input-row__display--placeholder { color: #5a6b7c; }
 
+    .cell-input-row, .rut-input-row { position: relative; display: flex; align-items: center; gap: 10px; background: #eaf3ff; border-radius: 999px; padding: 18px 26px; box-shadow: inset 0 2px 4px rgba(0,0,0,.08); width: 60%; max-width: 420px; margin: 0 auto 8px; }
+    .cell-input-prefix { font-size: 28px; font-weight: 700; color: #1c2b3b; padding-left: 2px; }
+    .cell-input, .rut-input { flex: 1; border: none; background: transparent; font-size: 28px; font-family: inherit; color: #1c2b3b; outline: none; text-align: left; }
+    .cell-input::placeholder { color: #5a6b7c; }
+    .cell-input-error { min-height: 22px; text-align: center; font-size: 16px; font-weight: 600; color: #c0392b; margin: 0 0 2px; }
 
-    /* Icono persona (se usa en el teclado de nombre) */
-    .person-icon {
-      width: 94px;
-      height: 94px;
-      flex: 0 0 auto;
-      background: #ffffff;
-      border-radius: 100px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,.2);
-    }
-    .person-icon__inner {
-      width: 61px;
-      height: 61px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, #ff6b6b 0, #e63757 40%, #b3203a 100%);
-      position: relative;
-    }
-    .person-icon__inner::before,
-    .person-icon__inner::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #f2f2f2;
-    }
-    .person-icon__inner::before {
-      top: 7px;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-    }
-    .person-icon__inner::after {
-      bottom: 4px;
-      width: 28px;
-      height: 14px;
-      border-radius: 14px 14px 8px 8px;
-    }
+    .virtual-keyboard { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; padding: 0 24px; box-sizing: border-box; }
+    .virtual-keyboard__row { display: flex; justify-content: center; gap: 14px; }
+    .virtual-keyboard__row--actions { margin-top: 24px; margin-bottom: 32px; }
+    .virtual-keyboard__key { min-width: 80px; min-height: 80px; padding: 16px 20px; border-radius: 999px; border: none; background: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,.18); font-size: 30px; font-weight: 600; font-family: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #1c2b3b; cursor: pointer; }
+    .virtual-keyboard__key--action { background: #f3f6fb; color: #1c2b3b; font-size: 22px; font-weight: 600; border: 1px solid #d3deef; box-shadow: 0 2px 4px rgba(0,0,0,.08); }
+    .virtual-keyboard__key--space { min-width: 260px; }
 
-    /* Campos y teclados */
-    .name-input-row {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      background: #eaf3ff;
-      border-radius: 999px;
-      padding: 14px 22px;
-      box-shadow: 0 2px 4px rgba(0,0,0,.08) inset;
-      width: 60%;
-      max-width: 420px;
-      margin: 0 auto 16px;
-    }
-    .name-input-row .person-icon {
-      width: 50px;
-      height: 50px;
-      box-shadow: none;
-    }
-    .name-input-row__display {
-      flex: 1;
-      font-size: 26px;
-      font-family: inherit;
-      font-weight: 600;
-      color: #000;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .name-input-row__display--placeholder {
-      color: #5a6b7c;
-    }
+    .virtual-keyboard--name, .virtual-keyboard--numeric, .virtual-keyboard--rut { margin-top: 12px; }
+    .virtual-keyboard--name .virtual-keyboard__row, .virtual-keyboard--numeric .virtual-keyboard__row, .virtual-keyboard--rut .virtual-keyboard__row { gap: 10px; }
+    .virtual-keyboard--name .virtual-keyboard__key, .virtual-keyboard--numeric .virtual-keyboard__key, .virtual-keyboard--rut .virtual-keyboard__key { min-width: 64px; min-height: 64px; padding: 10px 14px; font-size: 24px; }
+    .virtual-keyboard--name .virtual-keyboard__row--actions, .virtual-keyboard--numeric .virtual-keyboard__row--actions, .virtual-keyboard--rut .virtual-keyboard__row--actions { margin-top: 16px; margin-bottom: 20px; }
+    .virtual-keyboard--name .virtual-keyboard__key--space { min-width: 200px; }
 
-    .cell-input-row, .rut-input-row {
-      position: relative;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: #eaf3ff;
-      border-radius: 999px;
-      padding: 18px 26px;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,.08);
-      width: 60%;
-      max-width: 420px;
-      margin: 0 auto 8px;
-    }
+    .button-row { display: flex; flex-direction: row; justify-content: center; gap: 12px; margin-top: 16px; }
+    .btn-turn { border: none; border-radius: 999px; padding: 14px 18px; font-size: 22px; font-weight: 700; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .btn-turn--primary { background: var(--current-call-bg); color: #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,.25); }
+    .btn-turn--secondary { background: #ffffff; color: var(--primary-option-bg); border: 2px solid var(--primary-option-bg); }
+    .btn-turn--disabled { opacity: .5; cursor: default; }
+    @keyframes btn-turn-pulse-outline { 0% { outline: 0 solid rgba(255,77,79,0); box-shadow: 0 0 0 0 rgba(255,77,79,0); } 50% { outline: 4px solid rgba(255,77,79,.95); box-shadow: 0 0 0 8px rgba(255,77,79,.4); } 100% { outline: 0 solid rgba(255,77,79,0); box-shadow: 0 0 0 0 rgba(255,77,79,0); } }
+    .btn-turn--pulse { outline-offset: 3px; animation: btn-turn-pulse-outline 1s ease-out infinite; }
+    .btn-turn__icon { font-size: 24px; line-height: 1; }
 
-    .cell-input-prefix {
-      font-size: 28px;
-      font-weight: 700;
-      color: #1c2b3b;
-      padding-left: 2px;
-    }
-    .cell-input, .rut-input {
-      flex: 1;
-      border: none;
-      background: transparent;
-      font-size: 28px;
-      font-family: inherit;
-      color: #1c2b3b;
-      outline: none;
-      text-align: left;
-    }
-    .cell-input::placeholder {
-      color: #5a6b7c;
-    }
+    .app-footer { margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 18px; font-weight: 600; color: rgba(255,255,255,.85); opacity: .95; }
+    .app-footer__logo { width: 36px; height: 36px; object-fit: contain; }
+    .app-footer__text { text-transform: none; letter-spacing: .04em; }
+    .app-footer__status { display: flex; align-items: center; gap: 6px; margin-left: 12px; font-size: 14px; font-weight: 500; }
+    .status-led { width: 14px; height: 14px; border-radius: 50%; background: rgba(255,255,255,.35); box-shadow: 0 0 0 2px rgba(0,0,0,.25); }
+    .status-led--ok { background: #2ecc71; }
+    .status-led--error { background: #e74c3c; }
+    .status-led--checking { background: #f1c40f; }
+    .status-text { white-space: nowrap; }
 
-    .cell-input-error {
-      min-height: 22px;
-      text-align: center;
-      font-size: 16px;
-      font-weight: 600;
-      color: #c0392b;
-      margin: 0 0 2px;
-    }
-
-    .virtual-keyboard {
-      margin-top: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 0 24px;
-      box-sizing: border-box;
-    }
-    .virtual-keyboard__row {
-      display: flex;
-      justify-content: center;
-      gap: 14px;
-    }
-    .virtual-keyboard__row--actions {
-      margin-top: 24px;
-      margin-bottom: 32px;
-    }
-    .virtual-keyboard__key {
-      min-width: 80px;
-      min-height: 80px;
-      padding: 16px 20px;
-      border-radius: 999px;
-      border: none;
-      background: #ffffff;
-      box-shadow: 0 2px 4px rgba(0,0,0,.18);
-      font-size: 30px;
-      font-weight: 600;
-      font-family: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: #1c2b3b;
-      cursor: pointer;
-    }
-    .virtual-keyboard__key--action {
-      background: #f3f6fb;
-      color: #1c2b3b;
-      font-size: 22px;
-      font-weight: 600;
-      border: 1px solid #d3deef;
-      box-shadow: 0 2px 4px rgba(0,0,0,.08);
-    }
-
-    .virtual-keyboard__key--space {
-      min-width: 260px;
-    }
-
-    /* Tamaño unificado para los tres teclados (nombre, celular, RUT) */
-    .virtual-keyboard--name,
-    .virtual-keyboard--numeric,
-    .virtual-keyboard--rut {
-      margin-top: 12px;
-    }
-
-    .virtual-keyboard--name .virtual-keyboard__row,
-    .virtual-keyboard--numeric .virtual-keyboard__row,
-    .virtual-keyboard--rut .virtual-keyboard__row {
-      gap: 10px;
-    }
-
-    .virtual-keyboard--name .virtual-keyboard__key,
-    .virtual-keyboard--numeric .virtual-keyboard__key,
-    .virtual-keyboard--rut .virtual-keyboard__key {
-      min-width: 64px;
-      min-height: 64px;
-      padding: 10px 14px;
-      font-size: 24px;
-    }
-
-    .virtual-keyboard--name .virtual-keyboard__row--actions,
-    .virtual-keyboard--numeric .virtual-keyboard__row--actions,
-    .virtual-keyboard--rut .virtual-keyboard__row--actions {
-      margin-top: 16px;
-      margin-bottom: 20px;
-    }
-
-    .virtual-keyboard--name .virtual-keyboard__key--space {
-      min-width: 200px;
-    }
-
-    /* Botones inferiores */
-    .button-row {
-	  display: flex;
-	  flex-direction: row;
-	  justify-content: center;
-	  gap: 12px;
-	  margin-top: 16px;
-	}
-    .btn-turn {
-      border: none;
-      border-radius: 999px;
-      padding: 14px 18px;
-      font-size: 22px;
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-    .btn-turn--primary {
-      background: var(--current-call-bg);
-      color: #ffffff;
-      box-shadow: 0 4px 10px rgba(0,0,0,.25);
-    }
-    .btn-turn--secondary {
-      background: #ffffff;
-      color: var(--primary-option-bg);
-      border: 2px solid var(--primary-option-bg);
-    }
-    .btn-turn--disabled {
-      opacity: .5;
-      cursor: default;
-    }
-
-    @keyframes btn-turn-pulse-outline {
-      0% { outline: 0 solid rgba(255,77,79,0); box-shadow: 0 0 0 0 rgba(255,77,79,0); }
-      50% { outline: 4px solid rgba(255,77,79,.95); box-shadow: 0 0 0 8px rgba(255,77,79,.4); }
-      100% { outline: 0 solid rgba(255,77,79,0); box-shadow: 0 0 0 0 rgba(255,77,79,0); }
-    }
-    .btn-turn--pulse {
-      outline-offset: 3px;
-      animation: btn-turn-pulse-outline 1s ease-out infinite;
-    }
-    .btn-turn__icon {
-      font-size: 24px;
-      line-height: 1;
-    }
-
-    /* Footer */
-    .app-footer {
-      margin-top: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      font-size: 18px;
-      font-weight: 600;
-      color: rgba(255,255,255,.85);
-      opacity: .95;
-    }
-    .app-footer__logo {
-      width: 36px;
-      height: 36px;
-      object-fit: contain;
-    }
-    .app-footer__text {
-      text-transform: none;
-      letter-spacing: .04em;
-    }
-    .app-footer__status {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-left: 12px;
-      font-size: 14px;
-      font-weight: 500;
-    }
-    .status-led {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: rgba(255,255,255,.35); /* estado inicial: desconocido */
-      box-shadow: 0 0 0 2px rgba(0,0,0,.25);
-    }
-    .status-led--ok {
-      background: #2ecc71;
-    }
-    .status-led--error {
-      background: #e74c3c;
-    }
-    .status-led--checking {
-      background: #f1c40f;
-    }
-    .status-text {
-      white-space: nowrap;
-    }
-
-    /* Modal */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.45);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-    }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 999; }
     .modal-backdrop[hidden] { display: none; }
-    .modal-turno {
-      background: #ffffff;
-      border-radius: 22px;
-      padding: 36px 44px;
-      max-width: 600px;
-      width: min(92%, 600px);
-      text-align: center;
-      box-shadow: 0 12px 30px rgba(0,0,0,.35);
-      color: #1c2b3b;
-    }
-    .modal-turno__title {
-      font-size: 42px;
-      font-weight: 800;
-      margin: 0 0 12px;
-    }
-    .modal-turno__text {
-      font-size: 36px;
-      font-weight: 500;
-      margin: 0 0 20px;
-    }
+    .modal-turno { background: #ffffff; border-radius: 22px; padding: 36px 44px; max-width: 600px; width: min(92%, 600px); text-align: center; box-shadow: 0 12px 30px rgba(0,0,0,.35); color: #1c2b3b; }
+    .modal-turno__title { font-size: 42px; font-weight: 800; margin: 0 0 12px; }
+    .modal-turno__text  { font-size: 36px; font-weight: 500; margin: 0 0 20px; }
 
-    /* Responsivo */
-
-    /* Ajustes para tablets (iPad Air 1180x820 y similares) */
     @media (max-width: 1200px) {
-      .screen {
-        padding: 24px 20px;
-      }
-
-      .main-layout {
-        gap: 24px;
-      }
-
-      /* Panel izquierdo más compacto */
-      .current-call__label { font-size: 32px; }
-      .current-call__name  { font-size: 40px; }
-      .current-call__module{ font-size: 24px; }
-
+      .screen { padding: 24px 20px; }
+      .main-layout { gap: 24px; }
+      .current-call__label { font-size: 32px; } .current-call__name { font-size: 40px; } .current-call__module { font-size: 24px; }
       .latest-calls__title { font-size: 32px; margin-bottom: 12px; }
-      .call-row {
-        font-size: 22px;
-        padding: 10px 18px;
-      }
-
-      /* Panel derecho (card blanco) más compacto */
-      .take-turn__card {
-        padding: 20px 22px 24px;
-        max-height: calc(100vh - 140px);
-        overflow-y: auto;
-      }
-
-      .take-turn__title       { font-size: 32px; }
-      .take-turn__subtitle    { font-size: 18px; }
-      .take-turn__description { font-size: 16px; }
-
-      .option {
-        padding: 12px 18px;
-        font-size: 24px;
-      }
+      .call-row { font-size: 22px; padding: 10px 18px; }
+      .take-turn__card { padding: 20px 22px 24px; max-height: calc(100vh - 140px); overflow-y: auto; }
+      .take-turn__title { font-size: 32px; } .take-turn__subtitle { font-size: 18px; } .take-turn__description { font-size: 16px; }
+      .option { padding: 12px 18px; font-size: 24px; }
       .option__subtitle { font-size: 18px; }
-
-      /* Iconos algo más pequeños */
-      .qr-icon,
-      .pref-icon,
-      .idcard-icon,
-      .person-icon {
-        width: 72px;
-        height: 72px;
-      }
-      .person-icon__inner {
-        width: 46px;
-        height: 46px;
-      }
-
+      .qr-icon, .pref-icon, .idcard-icon, .person-icon { width: 72px; height: 72px; }
+      .person-icon__inner { width: 46px; height: 46px; }
       .virtual-keyboard--name .virtual-keyboard__key,
       .virtual-keyboard--numeric .virtual-keyboard__key,
-      .virtual-keyboard--rut .virtual-keyboard__key {
-        min-width: 56px;
-        min-height: 56px;
-        padding: 8px 10px;
-        font-size: 20px;
-      }
-
+      .virtual-keyboard--rut .virtual-keyboard__key { min-width: 56px; min-height: 56px; padding: 8px 10px; font-size: 20px; }
       .virtual-keyboard--name .virtual-keyboard__row--actions,
       .virtual-keyboard--numeric .virtual-keyboard__row--actions,
-      .virtual-keyboard--rut .virtual-keyboard__row--actions {
-        margin-top: 14px;
-        margin-bottom: 16px;
-      }
-
-      .btn-turn {
-        padding: 10px 14px;
-        font-size: 18px;
-      }
+      .virtual-keyboard--rut .virtual-keyboard__row--actions { margin-top: 14px; margin-bottom: 16px; }
+      .btn-turn { padding: 10px 14px; font-size: 18px; }
     }
-
-    @media (max-width: 1024px) {
-      .main-layout { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 1024px) { .main-layout { grid-template-columns: 1fr; } }
     @media (max-width: 768px) {
-      .screen {
-        width: 100%;
-        height: auto;
-        max-height: none;
-        padding: 24px 16px;
-      }
+      .screen { width: 100%; height: auto; max-height: none; padding: 24px 16px; }
       .latest-calls__title { font-size: 30px; }
       .call-row { font-size: 20px; }
       .current-call__name { font-size: 36px; }
@@ -713,10 +224,7 @@
       .take-turn__description { font-size: 16px; }
       .name-input-row__display { font-size: 20px; }
       .btn-turn { font-size: 18px; }
-      .name-input-row, .cell-input-row, .rut-input-row {
-        width: 100%;
-        max-width: none;
-      }
+      .name-input-row, .cell-input-row, .rut-input-row { width: 100%; max-width: none; }
     }
   </style>
 </head>
@@ -724,7 +232,7 @@
   <!-- PANTALLA PRINCIPAL -->
   <div class="screen screen--main" id="screen-main">
     <div class="main-layout">
-      <!-- Columna izquierda: LLAMANDO AHORA + ÚLTIMOS LLAMADOS -->
+      <!-- Izquierda: LLAMANDO AHORA + ÚLTIMOS LLAMADOS -->
       <div class="main-layout__left">
         <section class="current-call" aria-labelledby="current-call-title">
           <div id="current-call-title" class="current-call__label">LLAMANDO</div>
@@ -734,90 +242,48 @@
 
         <section class="latest-calls" aria-labelledby="latest-calls-title">
           <h1 id="latest-calls-title" class="latest-calls__title">ÚLTIMOS LLAMADOS</h1>
-
           <div class="latest-calls__list">
-            <div class="call-row call-row--active">
-              <span class="call-row__name">Juan P.</span>
-              <span class="call-row__module">Módulo 1</span>
-            </div>
-
-            <div class="call-row call-row--default">
-              <span class="call-row__name">Ana M.</span>
-              <span class="call-row__module">Módulo 1</span>
-            </div>
-
-            <div class="call-row call-row--default">
-              <span class="call-row__name">Carlos R.</span>
-              <span class="call-row__module">Módulo 3</span>
-            </div>
-
-            <div class="call-row call-row--default">
-              <span class="call-row__name">María S.</span>
-              <span class="call-row__module">Módulo 1</span>
-            </div>
-
-            <div class="call-row call-row--default">
-              <span class="call-row__name">Luis F.</span>
-              <span class="call-row__module">Despacho</span>
-            </div>
+            <div class="call-row call-row--active"><span class="call-row__name">Juan P.</span><span class="call-row__module">Módulo 1</span></div>
+            <div class="call-row call-row--default"><span class="call-row__name">Ana M.</span><span class="call-row__module">Módulo 1</span></div>
+            <div class="call-row call-row--default"><span class="call-row__name">Carlos R.</span><span class="call-row__module">Módulo 3</span></div>
+            <div class="call-row call-row--default"><span class="call-row__name">María S.</span><span class="call-row__module">Módulo 1</span></div>
+            <div class="call-row call-row--default"><span class="call-row__name">Luis F.</span><span class="call-row__module">Despacho</span></div>
           </div>
         </section>
       </div>
 
-      <!-- Columna derecha: TOMA TU TURNO (panel dinámico) -->
+      <!-- Derecha: TOMA TU TURNO -->
       <div class="main-layout__right">
         <section class="take-turn" aria-labelledby="take-turn-title">
           <div class="take-turn__card">
             <h2 id="take-turn-title" class="take-turn__title">TOMA TU TURNO</h2>
 
             <div id="take-turn-views">
-              <!-- Vista 1: menú de opciones -->
+              <!-- Vista 1: Menú -->
               <div class="turno-view" id="view-menu">
                 <div class="take-turn__options">
-                  <!-- Botón 1: Turno presencial (RUT) -->
-                  <div
-                    class="option option--pref"
-                    data-view-target="view-presencial"
-                    aria-label="Tomar turno preferencial"
-                  >
+                  <div class="option option--pref" data-view-target="view-presencial" aria-label="Tomar turno preferencial">
                     <div class="pref-icon" aria-hidden="true">
-					  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-wheelchair" viewBox="0 0 16 16">
-						  <path d="M12 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m-.663 2.146a1.5 1.5 0 0 0-.47-2.115l-2.5-1.508a1.5 1.5 0 0 0-1.676.086l-2.329 1.75a.866.866 0 0 0 1.051 1.375L7.361 3.37l.922.71-2.038 2.445A4.73 4.73 0 0 0 2.628 7.67l1.064 1.065a3.25 3.25 0 0 1 4.574 4.574l1.064 1.063a4.73 4.73 0 0 0 1.09-3.998l1.043-.292-.187 2.991a.872.872 0 1 0 1.741.098l.206-4.121A1 1 0 0 0 12.224 8h-2.79zM3.023 9.48a3.25 3.25 0 0 0 4.496 4.496l1.077 1.077a4.75 4.75 0 0 1-6.65-6.65z"/>
-						</svg>
-					</div>
-
-                    <div class="option__text">
-                      Tomar turno preferencial<br />
-                      <span class="option__subtitle">Toca aquí para ingresar tu rut</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-wheelchair" viewBox="0 0 16 16">
+                        <path d="M12 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m-.663 2.146a1.5 1.5 0 0 0-.47-2.115l-2.5-1.508a1.5 1.5 0 0 0-1.676.086l-2.329 1.75a.866.866 0 0 0 1.051 1.375L7.361 3.37l.922.71-2.038 2.445A4.73 4.73 0 0 0 2.628 7.67l1.064 1.065a3.25 3.25 0 0 1 4.574 4.574l1.064 1.063a4.73 4.73 0 0 0 1.09-3.998l1.043-.292-.187 2.991a.872.872 0 1 0 1.741.098l.206-4.121A1 1 0 0 0 12.224 8h-2.79zM3.023 9.48a3.25 3.25 0 0 0 4.496 4.496l1.077 1.077a4.75 4.75 0 0 1-6.65-6.65z"/>
+                      </svg>
                     </div>
+                    <div class="option__text">Tomar turno preferencial<br /><span class="option__subtitle">Toca aquí para ingresar tu rut</span></div>
                     <div class="option__arrow" aria-hidden="true">›</div>
                   </div>
 
-                  <!-- Botón 2: Turno con celular -->
-                  <div
-                    class="option option--cell"
-                    data-view-target="view-cell"
-                  >
+                  <div class="option option--cell" data-view-target="view-cell">
                     <div class="qr-icon" aria-hidden="true">
-					  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-whatsapp" viewBox="0 0 16 16">
-						  <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
-					</svg>
-					</div>
-
-                    <div class="option__text">
-                      Tomar turno con mi celular<br />
-                      <span class="option__subtitle">Toca aquí para ingresar tu celular</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-whatsapp" viewBox="0 0 16 16">
+                        <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
+                      </svg>
                     </div>
+                    <div class="option__text">Tomar turno con mi celular<br /><span class="option__subtitle">Toca aquí para ingresar tu celular</span></div>
                     <div class="option__arrow" aria-hidden="true">›</div>
                   </div>
 
-                  <!-- Botón 3: Turno solo con nombre -->
-                  <div
-                    class="option option--name"
-                    data-view-target="view-name"
-                  >
+                  <div class="option option--name" data-view-target="view-name">
                     <div class="idcard-icon" aria-hidden="true">
-                      <!-- Icono credencial / tarjeta -->
                       <svg viewBox="0 0 64 64" role="presentation">
                         <rect x="6" y="10" width="52" height="44" rx="6" ry="6" fill="#ffe6f1" stroke="#e08abc" stroke-width="3"/>
                         <circle cx="24" cy="28" r="7" fill="#f8c0d8"/>
@@ -827,214 +293,71 @@
                         <rect x="34" y="38" width="12" height="4" rx="2" fill="#e08abc"/>
                       </svg>
                     </div>
-                    <div class="option__text">
-                      Tomar turno solo con mi nombre<br />
-                      <span class="option__subtitle">Toca aquí para escribir tu nombre</span>
-                    </div>
+                    <div class="option__text">Tomar turno solo con mi nombre<br /><span class="option__subtitle">Toca aquí para escribir tu nombre</span></div>
                     <div class="option__arrow" aria-hidden="true">›</div>
                   </div>
                 </div>
               </div>
 
-              <!-- Vista 2: Turno presencial (RUT numérico) -->
+              <!-- Vista 2: Preferencial (RUT) -->
               <div class="turno-view" id="view-presencial" hidden>
                 <p class="take-turn__subtitle">Para tomar tu turno preferencial</p>
-
                 <div class="rut-input-row">
-                  <input
-                    type="text"
-                    id="rut-input"
-                    class="rut-input"
-                    inputmode="numeric"
-                    autocomplete="off"
-                    placeholder="Escribe tu RUT"
-                    readonly
-                  />
+                  <input type="text" id="rut-input" class="rut-input" inputmode="numeric" autocomplete="off" placeholder="Escribe tu RUT" readonly />
                 </div>
                 <p class="cell-input-error" id="rut-error" aria-live="polite"></p>
-
-                <div class="virtual-keyboard virtual-keyboard--rut" aria-label="Teclado para ingresar tu RUT">
-                  <div class="virtual-keyboard__row">
-                    <button type="button" class="virtual-keyboard__key" data-key="7">7</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="8">8</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="9">9</button>
-                  </div>
-                  <div class="virtual-keyboard__row">
-                    <button type="button" class="virtual-keyboard__key" data-key="4">4</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="5">5</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="6">6</button>
-                  </div>
-                  <div class="virtual-keyboard__row">
-                    <button type="button" class="virtual-keyboard__key" data-key="1">1</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="2">2</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="3">3</button>
-                  </div>
+                <div class="virtual-keyboard virtual-keyboard--rut" aria-label="Teclado RUT">
+                  <div class="virtual-keyboard__row"><button class="virtual-keyboard__key" data-key="7">7</button><button class="virtual-keyboard__key" data-key="8">8</button><button class="virtual-keyboard__key" data-key="9">9</button></div>
+                  <div class="virtual-keyboard__row"><button class="virtual-keyboard__key" data-key="4">4</button><button class="virtual-keyboard__key" data-key="5">5</button><button class="virtual-keyboard__key" data-key="6">6</button></div>
+                  <div class="virtual-keyboard__row"><button class="virtual-keyboard__key" data-key="1">1</button><button class="virtual-keyboard__key" data-key="2">2</button><button class="virtual-keyboard__key" data-key="3">3</button></div>
                   <div class="virtual-keyboard__row virtual-keyboard__row--actions">
-                    <button type="button" class="virtual-keyboard__key virtual-keyboard__key--action" data-key="BACKSPACE">Borrar</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="0">0</button>
-                    <button type="button" class="virtual-keyboard__key virtual-keyboard__key--action" data-key="CLEAR">Limpiar</button>
+                    <button class="virtual-keyboard__key virtual-keyboard__key--action" data-key="BACKSPACE">Borrar</button>
+                    <button class="virtual-keyboard__key" data-key="0">0</button>
+                    <button class="virtual-keyboard__key virtual-keyboard__key--action" data-key="CLEAR">Limpiar</button>
                   </div>
                 </div>
-
                 <div class="button-row">
-                  <button
-                    type="button"
-                    class="btn-turn btn-turn--primary btn-turn--disabled"
-                    id="btn-confirmar-rut"
-                    disabled
-                  >
-                    <span class="btn-turn__icon" aria-hidden="true">✓</span>
-                    <span>Confirmar turno preferencial</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    class="btn-turn btn-turn--secondary"
-                    id="btn-volver-menu-rut"
-                  >
-                    <span class="btn-turn__icon" aria-hidden="true">←</span>
-                    <span>Volver a opciones</span>
-                  </button>
+                  <button type="button" class="btn-turn btn-turn--primary btn-turn--disabled" id="btn-confirmar-rut" disabled><span class="btn-turn__icon">✓</span><span>Confirmar turno preferencial</span></button>
+                  <button type="button" class="btn-turn btn-turn--secondary" id="btn-volver-menu-rut"><span class="btn-turn__icon">←</span><span>Volver a opciones</span></button>
                 </div>
               </div>
 
-              <!-- Vista 3: Turno con celular -->
+              <!-- Vista 3: Celular -->
               <div class="turno-view" id="view-cell" hidden>
                 <p class="take-turn__subtitle">Ingresa un número de celular para contactarte</p>
-
                 <div class="cell-input-row">
                   <span class="cell-input-prefix">+56</span>
-                  <input
-                    type="tel"
-                    id="celular-input"
-                    class="cell-input"
-                    inputmode="tel"
-                    autocomplete="off"
-                    placeholder=""
-                    readonly
-                  />
+                  <input type="tel" id="celular-input" class="cell-input" inputmode="tel" autocomplete="off" placeholder="" readonly />
                 </div>
                 <p class="cell-input-error" id="celular-error" aria-live="polite"></p>
-
-                <div class="virtual-keyboard virtual-keyboard--numeric" aria-label="Teclado numérico para ingresar tu celular">
-                  <div class="virtual-keyboard__row">
-				    <button type="button" class="virtual-keyboard__key" data-key="7">7</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="8">8</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="9">9</button>
-                  </div>
-                  <div class="virtual-keyboard__row">
-                    <button type="button" class="virtual-keyboard__key" data-key="4">4</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="5">5</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="6">6</button>
-                  </div>
-                  <div class="virtual-keyboard__row">
-                    <button type="button" class="virtual-keyboard__key" data-key="1">1</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="2">2</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="3">3</button>
-                  </div>
-                  <div class="virtual-keyboard__row virtual-keyboard__row--actions">
-                    <button type="button" class="virtual-keyboard__key virtual-keyboard__key--action" data-key="BACKSPACE">Borrar</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="0">0</button>
-                    <button type="button" class="virtual-keyboard__key virtual-keyboard__key--action" data-key="CLEAR">Limpiar</button>
-                  </div>
+                <div class="virtual-keyboard virtual-keyboard--numeric" aria-label="Teclado numérico">
+                  <div class="virtual-keyboard__row"><button class="virtual-keyboard__key" data-key="7">7</button><button class="virtual-keyboard__key" data-key="8">8</button><button class="virtual-keyboard__key" data-key="9">9</button></div>
+                  <div class="virtual-keyboard__row"><button class="virtual-keyboard__key" data-key="4">4</button><button class="virtual-keyboard__key" data-key="5">5</button><button class="virtual-keyboard__key" data-key="6">6</button></div>
+                  <div class="virtual-keyboard__row"><button class="virtual-keyboard__key" data-key="1">1</button><button class="virtual-keyboard__key" data-key="2">2</button><button class="virtual-keyboard__key" data-key="3">3</button></div>
+                  <div class="virtual-keyboard__row virtual-keyboard__row--actions"><button class="virtual-keyboard__key virtual-keyboard__key--action" data-key="BACKSPACE">Borrar</button><button class="virtual-keyboard__key" data-key="0">0</button><button class="virtual-keyboard__key virtual-keyboard__key--action" data-key="CLEAR">Limpiar</button></div>
                 </div>
-
                 <div class="button-row">
-                  <button
-                    type="button"
-                    class="btn-turn btn-turn--primary btn-turn--disabled"
-                    id="btn-confirmar-celular"
-                    disabled
-                  >
-                    <span class="btn-turn__icon" aria-hidden="true">✓</span>
-                    <span>Confirmar turno</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    class="btn-turn btn-turn--secondary"
-                    id="btn-volver-menu-cell"
-                  >
-                    <span class="btn-turn__icon" aria-hidden="true">←</span>
-                    <span>Volver a opciones</span>
-                  </button>
+                  <button type="button" class="btn-turn btn-turn--primary btn-turn--disabled" id="btn-confirmar-celular" disabled><span class="btn-turn__icon">✓</span><span>Confirmar turno</span></button>
+                  <button type="button" class="btn-turn btn-turn--secondary" id="btn-volver-menu-cell"><span class="btn-turn__icon">←</span><span>Volver a opciones</span></button>
                 </div>
               </div>
 
-              <!-- Vista 4: Turno solo con nombre -->
+              <!-- Vista 4: Nombre -->
               <div class="turno-view" id="view-name" hidden>
                 <p class="take-turn__subtitle">Te recomendamos agregar la primera letra de tu apellido.</p>
-
                 <div class="name-input-row">
-                  <div
-                    class="name-input-row__display name-input-row__display--placeholder"
-                    id="nombre-display"
-                    role="textbox"
-                    aria-label="Nombre para llamarte"
-                  >
-                    Toca las letras para escribir tu nombre
-                  </div>
+                  <div class="name-input-row__display name-input-row__display--placeholder" id="nombre-display" role="textbox" aria-label="Nombre para llamarte">Toca las letras para escribir tu nombre</div>
                   <input type="hidden" id="nombre-sin-celular" name="nombre" autocomplete="off" />
                 </div>
-
                 <div class="virtual-keyboard virtual-keyboard--name" aria-label="Teclado para escribir tu nombre">
-                  <div class="virtual-keyboard__row">
-                    <button type="button" class="virtual-keyboard__key" data-key="Q">Q</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="W">W</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="E">E</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="R">R</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="T">T</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="Y">Y</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="U">U</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="I">I</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="O">O</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="P">P</button>
-                  </div>
-                  <div class="virtual-keyboard__row">
-                    <button type="button" class="virtual-keyboard__key" data-key="A">A</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="S">S</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="D">D</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="F">F</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="G">G</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="H">H</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="J">J</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="K">K</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="L">L</button>
-                  </div>
-                  <div class="virtual-keyboard__row">
-                    <button type="button" class="virtual-keyboard__key" data-key="Z">Z</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="X">X</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="C">C</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="V">V</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="B">B</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="N">N</button>
-                    <button type="button" class="virtual-keyboard__key" data-key="M">M</button>
-                  </div>
-                  <div class="virtual-keyboard__row virtual-keyboard__row--actions">
-                    <button type="button" class="virtual-keyboard__key virtual-keyboard__key--action" data-key="BACKSPACE">Borrar</button>
-                    <button type="button" class="virtual-keyboard__key virtual-keyboard__key--action virtual-keyboard__key--space" data-key="SPACE">Espacio</button>
-                  </div>
+                  <div class="virtual-keyboard__row"><button class="virtual-keyboard__key" data-key="Q">Q</button><button class="virtual-keyboard__key" data-key="W">W</button><button class="virtual-keyboard__key" data-key="E">E</button><button class="virtual-keyboard__key" data-key="R">R</button><button class="virtual-keyboard__key" data-key="T">T</button><button class="virtual-keyboard__key" data-key="Y">Y</button><button class="virtual-keyboard__key" data-key="U">U</button><button class="virtual-keyboard__key" data-key="I">I</button><button class="virtual-keyboard__key" data-key="O">O</button><button class="virtual-keyboard__key" data-key="P">P</button></div>
+                  <div class="virtual-keyboard__row"><button class="virtual-keyboard__key" data-key="A">A</button><button class="virtual-keyboard__key" data-key="S">S</button><button class="virtual-keyboard__key" data-key="D">D</button><button class="virtual-keyboard__key" data-key="F">F</button><button class="virtual-keyboard__key" data-key="G">G</button><button class="virtual-keyboard__key" data-key="H">H</button><button class="virtual-keyboard__key" data-key="J">J</button><button class="virtual-keyboard__key" data-key="K">K</button><button class="virtual-keyboard__key" data-key="L">L</button></div>
+                  <div class="virtual-keyboard__row"><button class="virtual-keyboard__key" data-key="Z">Z</button><button class="virtual-keyboard__key" data-key="X">X</button><button class="virtual-keyboard__key" data-key="C">C</button><button class="virtual-keyboard__key" data-key="V">V</button><button class="virtual-keyboard__key" data-key="B">B</button><button class="virtual-keyboard__key" data-key="N">N</button><button class="virtual-keyboard__key" data-key="M">M</button></div>
+                  <div class="virtual-keyboard__row virtual-keyboard__row--actions"><button class="virtual-keyboard__key virtual-keyboard__key--action" data-key="BACKSPACE">Borrar</button><button class="virtual-keyboard__key virtual-keyboard__key--action virtual-keyboard__key--space" data-key="SPACE">Espacio</button></div>
                 </div>
-
                 <div class="button-row">
-                  <button
-                    type="button"
-                    class="btn-turn btn-turn--primary btn-turn--disabled"
-                    id="btn-confirmar-nombre"
-                    disabled
-                  >
-                    <span class="btn-turn__icon" aria-hidden="true">✓</span>
-                    <span>Confirmar turno</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    class="btn-turn btn-turn--secondary"
-                    id="btn-volver-menu-name"
-                  >
-                    <span class="btn-turn__icon" aria-hidden="true">←</span>
-                    <span>Volver a opciones</span>
-                  </button>
+                  <button type="button" class="btn-turn btn-turn--primary btn-turn--disabled" id="btn-confirmar-nombre" disabled><span class="btn-turn__icon">✓</span><span>Confirmar turno</span></button>
+                  <button type="button" class="btn-turn btn-turn--secondary" id="btn-volver-menu-name"><span class="btn-turn__icon">←</span><span>Volver a opciones</span></button>
                 </div>
               </div>
             </div>
@@ -1053,7 +376,7 @@
     </footer>
   </div>
 
-  <!-- MODAL TURNO REGISTRADO -->
+  <!-- MODAL -->
   <div class="modal-backdrop" id="turno-modal" hidden>
     <div class="modal-turno" role="dialog" aria-modal="true" aria-labelledby="turno-modal-title">
       <h2 id="turno-modal-title" class="modal-turno__title">¡Gracias!</h2>
@@ -1063,37 +386,118 @@
 
   <script>
   (function () {
+    // -------- Configuración API --------
+    const API_URL            = "https://api-turnos-mamq.onrender.com/api/turno";
+    const HEALTH_URL         = "https://api-turnos-mamq.onrender.com/api/health-auth"; // ahora autenticado
+    const HEALTH_METRICS_URL = "https://api-turnos-mamq.onrender.com/api/health-metric";
+    const HEALTH_INTERVAL_MS = 15000;
+
+    // -------- Helpers de Auth (Bearer deviceToken) --------
+    const KEY = 'turnoliteDeviceToken';
+    function getToken() {
+      try { return window.__TURNOLITE_TOKEN__ || localStorage.getItem(KEY); } catch { return null; }
+    }
+    function ensureToken() {
+      const t = getToken();
+      if (!t) { try{localStorage.removeItem(KEY);}catch{}; location.replace('inicio.html'); throw new Error('NO_DEVICE_TOKEN'); }
+      return t;
+    }
+    async function fetchWithAuth(url, options) {
+      options = options || {};
+      const t = ensureToken();
+      const headers = new Headers(options.headers || {});
+      if (!headers.has('Authorization')) headers.set('Authorization', 'Bearer ' + t);
+      if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+      return fetch(url, { ...options, headers });
+    }
+    async function postJsonAuth(url, body, extra) {
+      const res = await fetchWithAuth(url, { method: 'POST', body: JSON.stringify(body || {}), ...(extra || {}) });
+      let data = null; try { data = await res.json(); } catch {}
+      if (!res.ok) throw new Error((data && data.error) || ('HTTP_' + res.status));
+      return data || {};
+    }
+
+    // -------- Identidad multi-cliente (si la usas en la URL) --------
+    const urlParams   = new URLSearchParams(window.location.search);
+    const CLIENTE_ID  = urlParams.get('cliente')  || 'default';
+    const SUCURSAL_ID = urlParams.get('sucursal') || null;
+    const KIOSCO_ID   = urlParams.get('kiosco')   || null;
+
+    // -------- Estado visual del health --------
+    const healthLed  = document.getElementById('health-led');
+    const healthText = document.getElementById('health-text');
+    function setHealthState(state) {
+      if (!healthLed || !healthText) return;
+      healthLed.classList.remove('status-led--ok','status-led--error','status-led--checking');
+      if (state === 'ok')      { healthLed.classList.add('status-led--ok');      healthText.textContent = 'Servicios en línea'; }
+      else if (state === 'error'){ healthLed.classList.add('status-led--error'); healthText.textContent = 'Sin conexión con servidor'; }
+      else                     { healthLed.classList.add('status-led--checking');healthText.textContent = 'Verificando…'; }
+    }
+
+    async function reportHealthMetric(pingMs) {
+      try {
+        await postJsonAuth(HEALTH_METRICS_URL, {
+          pingMs,
+          healthUrl: HEALTH_URL,
+          page: location.href,
+          userAgent: navigator.userAgent,
+          screenWidth:  window.screen?.width,
+          screenHeight: window.screen?.height,
+          timestamp: new Date().toISOString(),
+          timeZone: (Intl.DateTimeFormat().resolvedOptions().timeZone || null),
+          // opcional si quieres seguir enviando (backend ya deduce desde token):
+          clienteId:  CLIENTE_ID,
+          sucursalId: SUCURSAL_ID,
+          kioscoId:   KIOSCO_ID
+        }, { keepalive: true });
+      } catch (e) {
+        console.warn('[turnolite] health-metric no enviado:', e?.message || e);
+      }
+    }
+
+    async function checkHealthOnce() {
+      try {
+        setHealthState('checking');
+        const t0 = performance.now();
+        const resp = await fetchWithAuth(HEALTH_URL, { method: 'GET', cache: 'no-store' });
+        const t1 = performance.now();
+        const pingMs = Math.round(t1 - t0);
+        if (!resp.ok) { setHealthState('error'); return; }
+        setHealthState('ok');
+        reportHealthMetric(pingMs);
+      } catch (e) {
+        console.error('[turnolite] Error health:', e);
+        setHealthState('error');
+      }
+    }
+    function startHealthPolling(){ checkHealthOnce(); setInterval(checkHealthOnce, HEALTH_INTERVAL_MS); }
+
+    // -------- Resto de la lógica de UI (idéntica a tu versión) --------
     const mainScreen = document.getElementById('screen-main');
+    const viewMenu       = document.getElementById('view-menu');
+    const viewPresencial = document.getElementById('view-presencial');
+    const viewCell       = document.getElementById('view-cell');
+    const viewName       = document.getElementById('view-name');
+    const viewButtons    = document.querySelectorAll('[data-view-target]');
 
-    const viewMenu        = document.getElementById('view-menu');
-    const viewPresencial  = document.getElementById('view-presencial');
-    const viewCell        = document.getElementById('view-cell');
-    const viewName        = document.getElementById('view-name');
-
-    const viewButtons = document.querySelectorAll('[data-view-target]');
-
-    // Nombre
     const nombreDisplay    = document.getElementById('nombre-display');
     const nombreInput      = document.getElementById('nombre-sin-celular');
     const nombreKeys       = document.querySelectorAll('.virtual-keyboard--name .virtual-keyboard__key');
     const btnConfirmNombre = document.getElementById('btn-confirmar-nombre');
     const btnVolverName    = document.getElementById('btn-volver-menu-name');
 
-    // Celular
     const cellInput      = document.getElementById('celular-input');
     const cellError      = document.getElementById('celular-error');
     const numericKeys    = document.querySelectorAll('.virtual-keyboard--numeric .virtual-keyboard__key');
     const btnConfirmCell = document.getElementById('btn-confirmar-celular');
     const btnVolverCell  = document.getElementById('btn-volver-menu-cell');
 
-    // RUT presencial (solo números)
     const rutInput      = document.getElementById('rut-input');
     const rutError      = document.getElementById('rut-error');
     const rutKeys       = document.querySelectorAll('.virtual-keyboard--rut .virtual-keyboard__key');
     const btnConfirmRut = document.getElementById('btn-confirmar-rut');
     const btnVolverRut  = document.getElementById('btn-volver-menu-rut');
 
-    // Modal
     const turnoModal = document.getElementById('turno-modal');
 
     const MAX_CELL_DIGITS = 9;
@@ -1104,652 +508,76 @@
     let inactivityTimerId = null;
     let modalTimerId      = null;
 
-    // Estado nombre
-    let currentName = "";
+    function sanitizePhone(v){ return (v||'').replace(/\D/g,''); }
 
-    // Estado celular
-    function sanitizePhone(value) {
-      return (value || "").replace(/\D/g, "");
-    }
-
-    // Estado RUT presencial: solo números
-    let rutDigits = "";
-
-    if (!mainScreen || !viewMenu) {
-      console.warn('[turnolite] Estructura básica no encontrada. Abortando.');
-      return;
-    }
-	
-	// -------- Identidad del kiosco / cliente (multi-cliente) --------
-    // Ejemplo de URL:
-    //   .../turnolite/?cliente=farmacia_central&sucursal=s1&kiosco=k1
-    const urlParams   = new URLSearchParams(window.location.search);
-    const CLIENTE_ID  = urlParams.get('cliente')  || 'default';
-    const SUCURSAL_ID = urlParams.get('sucursal') || null;
-    const KIOSCO_ID   = urlParams.get('kiosco')   || null;
-
-    // Log de diagnóstico (útil en instalación)
-    console.log('[turnolite] contexto kiosco:', {
-      CLIENTE_ID,
-      SUCURSAL_ID,
-      KIOSCO_ID,
-    });
-
-    // -------- Configuración API remota (backend de turnos) --------
-    const API_URL = "https://api-turnos-mamq.onrender.com/api/turno";
-
-    // -------- Health-check visual (LED en footer) --------
-    // Ajusta HEALTH_URL si la ruta real de tu endpoint de salud es distinta.
-    const HEALTH_URL = "https://api-turnos-mamq.onrender.com/api/health";
-    const HEALTH_INTERVAL_MS = 15000; // intervalo en ms (15 segundos por defecto)
-	const HEALTH_METRICS_URL = "https://api-turnos-mamq.onrender.com/api/health-metric";
-
-    const healthLed  = document.getElementById('health-led');
-    const healthText = document.getElementById('health-text');
-    let healthTimerId = null;
-
-    function setHealthState(state) {
-      if (!healthLed || !healthText) return;
-
-      healthLed.classList.remove('status-led--ok', 'status-led--error', 'status-led--checking');
-
-      if (state === 'ok') {
-        healthLed.classList.add('status-led--ok');
-        healthText.textContent = 'Servicios en línea';
-      } else if (state === 'error') {
-        healthLed.classList.add('status-led--error');
-        healthText.textContent = 'Sin conexión con servidor';
-      } else if (state === 'checking') {
-        healthLed.classList.add('status-led--checking');
-        healthText.textContent = 'Verificando…';
-      }
-    }
-
-	async function checkHealthOnce() {
-	  if (!HEALTH_URL || !healthLed || !healthText) return;
-
-	  try {
-		setHealthState('checking');
-
-		const t0 = performance.now();
-		const resp = await fetch(HEALTH_URL, {
-		  method: 'GET',
-		  cache: 'no-store',
-		});
-		const t1 = performance.now();
-		const pingMs = Math.round(t1 - t0);
-
-		if (!resp.ok) {
-		  console.error('[turnolite] Health-check no OK. Status:', resp.status);
-		  setHealthState('error');
-		  return;
-		}
-
-		setHealthState('ok');
-
-		// Aquí registramos el ping + datos del cliente en tu API
-		reportHealthMetric(pingMs);
-	  } catch (err) {
-		console.error('[turnolite] Error al consultar health-check:', err);
-		setHealthState('error');
-	  }
-	}
-
-    function startHealthPolling() {
-      if (!HEALTH_URL || !healthLed || !healthText) {
-        console.warn('[turnolite] HEALTH_URL o elementos de estado no configurados; health-check deshabilitado.');
-        return;
-      }
-      // comprobación inicial inmediata
-      checkHealthOnce();
-      if (healthTimerId !== null) clearInterval(healthTimerId);
-      healthTimerId = setInterval(checkHealthOnce, HEALTH_INTERVAL_MS);
-    }
-	
-    function reportHealthMetric(pingMs) {
-      if (!HEALTH_METRICS_URL) return;
-
-      let timeZone = null;
-      try {
-        timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
-      } catch (e) {
-        timeZone = null;
-      }
-
-      const payload = {
-		  pingMs,
-		  healthUrl: HEALTH_URL,
-		  page: window.location.href,
-		  userAgent: navigator.userAgent,
-		  screenWidth: window.screen?.width,
-		  screenHeight: window.screen?.height,
-		  timestamp: new Date().toISOString(),
-		  timeZone,
-		  // multi-cliente
-		  clienteId:  CLIENTE_ID,
-		  sucursalId: SUCURSAL_ID,
-		  kioscoId:   KIOSCO_ID,
-		};
-
-      try {
-        fetch(HEALTH_METRICS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          keepalive: true,
-        });
-      } catch (e) {
-        console.error('[turnolite] No se pudo enviar health-metric:', e);
-      }
-    }
-
-
-    async function enviarTurno(tipo, valor) {
-      if (!API_URL) {
-        console.warn("[turnolite] API_URL no configurada; se omite llamada remota.");
-        return null;
-      }
-
-      const payload = { tipo };
-
-      if (tipo === "NOMBRE") {
-        payload.nombre = valor;
-      } else if (tipo === "CELULAR") {
-        payload.celular = valor;
-      } else if (tipo === "PREFERENCIAL") {
-        payload.rut = valor;
-      } else if (valor != null) {
-        payload.valor = valor;
-      }
-	  
-// -------- multi-cliente --------
-      payload.clienteId  = CLIENTE_ID;
-      payload.sucursalId = SUCURSAL_ID;
-      payload.kioscoId   = KIOSCO_ID;
-	  
-
-      try {
-        const resp = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        let data = null;
-        try {
-          data = await resp.json();
-        } catch (e) {
-          console.error("[turnolite] No se pudo parsear la respuesta JSON del API.", e);
-        }
-
-        if (!resp.ok || !data) {
-          console.error("[turnolite] Error en respuesta del API:", data && data.error, "status:", resp.status);
-          return null;
-        }
-
-        return data.turno || null;
-      } catch (error) {
-        console.error("[turnolite] Error de red al llamar al API:", error);
-        return null;
-      }
-    }
-
-    // -------- Cambio de vistas sólo en el panel derecho --------
-    function showView(id) {
+    // Cambio de vistas
+    function showView(id){
       activeViewId = id;
-
       if (viewMenu)       viewMenu.hidden       = (id !== 'view-menu');
       if (viewPresencial) viewPresencial.hidden = (id !== 'view-presencial');
       if (viewCell)       viewCell.hidden       = (id !== 'view-cell');
       if (viewName)       viewName.hidden       = (id !== 'view-name');
-
-      if (id === 'view-menu') {
-        clearInactivityTimer();
-      } else {
-        resetInactivityTimer();
-      }
+      if (id === 'view-menu') clearInactivityTimer(); else resetInactivityTimer();
     }
-
-    // -------- Timers de inactividad --------
-    function getInactivityLimit() {
-      if (activeViewId === 'view-name') {
-        return currentName && currentName.trim().length >= 3 ? 10000 : 5000;
-      }
-      if (activeViewId === 'view-cell') {
-        const digits = sanitizePhone(cellInput ? cellInput.value || "" : "");
-        return digits.length === MAX_CELL_DIGITS ? 10000 : 5000;
-      }
-      if (activeViewId === 'view-presencial') {
-        const len = (rutDigits || "").length;
-        return len >= 7 ? 10000 : 5000;
-      }
+    function getInactivityLimit(){
+      if (activeViewId === 'view-name')  { const n = (nombreInput?.value||'').trim(); return n.length>=3 ? 10000 : 5000; }
+      if (activeViewId === 'view-cell')  { const d = sanitizePhone(cellInput?.value||''); return d.length===MAX_CELL_DIGITS ? 10000 : 5000; }
+      if (activeViewId === 'view-presencial'){ const len = (rutInput?.value||'').replace(/\D/g,'').length; return len>=7 ? 10000 : 5000; }
       return 5000;
     }
+    function clearInactivityTimer(){ if (inactivityTimerId!==null){ clearTimeout(inactivityTimerId); inactivityTimerId=null; } }
+    function resetInactivityTimer(){ clearInactivityTimer(); inactivityTimerId=setTimeout(function(){ if(activeViewId!=='view-menu') showView('view-menu'); }, getInactivityLimit()); }
 
-    function clearInactivityTimer() {
-      if (inactivityTimerId !== null) {
-        clearTimeout(inactivityTimerId);
-        inactivityTimerId = null;
-      }
-    }
+    // Modal
+    function showTurnoModal(){ turnoModal.hidden=false; if (modalTimerId) clearTimeout(modalTimerId); modalTimerId=setTimeout(function(){ turnoModal.hidden=true; showView('view-menu'); },3000); }
 
-    function resetInactivityTimer() {
-      clearInactivityTimer();
-      inactivityTimerId = setTimeout(function () {
-        if (activeViewId !== 'view-menu') {
-          console.log('[turnolite] inactividad → volver a menú de opciones');
-          showView('view-menu');
-        }
-      }, getInactivityLimit());
-    }
+    // Nombre
+    let currentName = "";
+    function updateNombreDisplay(){ if(!nombreDisplay)return; if(!currentName){ nombreDisplay.textContent="Toca las letras para escribir tu nombre"; nombreDisplay.classList.add("name-input-row__display--placeholder"); } else { nombreDisplay.textContent=currentName; nombreDisplay.classList.remove("name-input-row__display--placeholder"); } if (nombreInput) nombreInput.value=currentName; }
+    function updateNombreConfirmState(){ if(!btnConfirmNombre)return; const ok = currentName && currentName.trim().length>=3; btnConfirmNombre.disabled=!ok; btnConfirmNombre.classList.toggle('btn-turn--disabled',!ok); btnConfirmNombre.classList.toggle('btn-turn--pulse',ok); }
+    function resetNombre(){ currentName=""; updateNombreDisplay(); updateNombreConfirmState(); }
+    (nombreKeys||[]).forEach(function(btn){ btn.addEventListener('click',function(){ const key=btn.getAttribute('data-key'); if(!key) return; if(key==='BACKSPACE'){ currentName=currentName.slice(0,-1); } else if(key==='SPACE'){ if(currentName && currentName.length<MAX_NAME_CHARS) currentName+=' '; } else { if(currentName.length<MAX_NAME_CHARS) currentName+=key; } updateNombreDisplay(); updateNombreConfirmState(); resetInactivityTimer(); }); });
+    updateNombreDisplay(); updateNombreConfirmState();
+    if (btnConfirmNombre){ btnConfirmNombre.addEventListener('click', async function(){ const nombre=(currentName||'').trim(); if(nombre.length<3){ resetInactivityTimer(); return; } clearInactivityTimer(); const data = await postJsonAuth(API_URL,{ tipo:'NOMBRE', nombre }); if(!data || !data.turno){ resetInactivityTimer(); return; } showTurnoModal(); }); }
+    document.getElementById('btn-volver-menu-name')?.addEventListener('click',function(){ resetNombre(); showView('view-menu'); });
 
-    // -------- Modal --------
-    function showTurnoModal() {
-      if (!turnoModal) return;
-      turnoModal.hidden = false;
-      if (modalTimerId !== null) clearTimeout(modalTimerId);
-      modalTimerId = setTimeout(function () {
-        hideTurnoModal();
-        showView('view-menu');
-      }, 3000);
-    }
+    // Celular
+    function resetCellForm(){ if(cellInput) cellInput.value=""; if(cellError) cellError.textContent=""; if(btnConfirmCell){ btnConfirmCell.disabled=true; btnConfirmCell.classList.add('btn-turn--disabled'); btnConfirmCell.classList.remove('btn-turn--pulse'); } }
+    function isValidChileMobile(v){ return sanitizePhone(v).length===MAX_CELL_DIGITS; }
+    function updateCellConfirmState(){ if(!btnConfirmCell || !cellInput) return; const ok = isValidChileMobile(cellInput.value||''); btnConfirmCell.disabled=!ok; btnConfirmCell.classList.toggle('btn-turn--disabled',!ok); btnConfirmCell.classList.toggle('btn-turn--pulse',ok); }
+    function showCellError(m){ if(cellError) cellError.textContent=m||''; }
+    (numericKeys||[]).forEach(function(btn){ btn.addEventListener('click',function(){ const key=btn.getAttribute('data-key'); if(!key) return; let v=cellInput.value||''; if(key==='BACKSPACE'){ v=v.slice(0,-1); } else if(key==='CLEAR'){ v=''; } else { if(sanitizePhone(v).length>=MAX_CELL_DIGITS) return; v+=key; } cellInput.value=v; updateCellConfirmState(); showCellError(''); resetInactivityTimer(); }); });
+    if (btnConfirmCell && cellInput){ btnConfirmCell.addEventListener('click', async function(){ const v=cellInput.value||''; if(!isValidChileMobile(v)){ showCellError('Número de celular inválido. Debe tener 9 dígitos.'); return; } clearInactivityTimer(); const data = await postJsonAuth(API_URL,{ tipo:'CELULAR', celular: sanitizePhone(v) }); if(!data || !data.turno){ resetInactivityTimer(); return; } showTurnoModal(); }); }
+    document.getElementById('btn-volver-menu-cell')?.addEventListener('click',function(){ resetCellForm(); showView('view-menu'); });
 
-    function hideTurnoModal() {
-      if (!turnoModal) return;
-      turnoModal.hidden = true;
-      if (modalTimerId !== null) {
-        clearTimeout(modalTimerId);
-        modalTimerId = null;
-      }
-    }
+    // RUT preferencial (numérico simple)
+    let rutDigits = "";
+    function formatRutDisplay(d){ if(!d) return ""; const rev=d.split("").reverse(); const out=[]; for(let i=0;i<rev.length;i++){ out.push(rev[i]); if((i+1)%3===0 && i+1<rev.length) out.push("."); } return out.reverse().join(""); }
+    function renderRut(){ if(rutInput) rutInput.value = formatRutDisplay(rutDigits); updateRutConfirmState(); }
+    function resetRutForm(){ rutDigits=""; if(rutError) rutError.textContent=""; renderRut(); }
+    function updateRutConfirmState(){ if(!btnConfirmRut) return; const len=(rutDigits||"").length; const ok = len>=7; btnConfirmRut.disabled=!ok; btnConfirmRut.classList.toggle('btn-turn--disabled',!ok); btnConfirmRut.classList.toggle('btn-turn--pulse', len===MAX_RUT_DIGITS); }
+    (rutKeys||[]).forEach(function(btn){ btn.addEventListener('click',function(){ const key=btn.getAttribute('data-key'); if(!key) return; if(key==='BACKSPACE'){ rutDigits=rutDigits.slice(0,-1); } else if(key==='CLEAR'){ rutDigits=''; } else if(/^\d$/.test(key)){ if(rutDigits.length<MAX_RUT_DIGITS) rutDigits+=key; } renderRut(); if(rutError) rutError.textContent=""; resetInactivityTimer(); }); });
+    document.getElementById('btn-confirmar-rut')?.addEventListener('click', async function(){ if((rutDigits||'').length<7){ if(rutError) rutError.textContent='Ingresa al menos 7 dígitos de tu RUT.'; return; } clearInactivityTimer(); const data = await postJsonAuth(API_URL,{ tipo:'PREFERENCIAL', rut: rutDigits }); if(!data || !data.turno){ resetInactivityTimer(); return; } showTurnoModal(); });
+    document.getElementById('btn-volver-menu-rut')?.addEventListener('click',function(){ resetRutForm(); showView('view-menu'); });
 
-    // -------- Vista: Nombre --------
-    function updateNombreDisplay() {
-      if (!nombreDisplay) return;
-      if (!currentName) {
-        nombreDisplay.textContent = "Toca las letras para escribir tu nombre";
-        nombreDisplay.classList.add("name-input-row__display--placeholder");
-      } else {
-        nombreDisplay.textContent = currentName;
-        nombreDisplay.classList.remove("name-input-row__display--placeholder");
-      }
-      if (nombreInput) nombreInput.value = currentName;
-    }
-
-    function updateNombreConfirmState() {
-      if (!btnConfirmNombre) return;
-      const enabled = currentName && currentName.trim().length >= 3;
-      if (enabled) {
-        btnConfirmNombre.disabled = false;
-        btnConfirmNombre.classList.remove("btn-turn--disabled");
-        btnConfirmNombre.classList.add("btn-turn--pulse");
-      } else {
-        btnConfirmNombre.disabled = true;
-        btnConfirmNombre.classList.add("btn-turn--disabled");
-        btnConfirmNombre.classList.remove("btn-turn--pulse");
-      }
-    }
-
-    function resetNombre() {
-      currentName = "";
-      updateNombreDisplay();
-      updateNombreConfirmState();
-    }
-
-    if (nombreKeys && nombreKeys.length) {
-      nombreKeys.forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          const key = btn.getAttribute("data-key");
-          if (!key) return;
-
-          if (key === "BACKSPACE") {
-            currentName = currentName.slice(0, -1);
-          } else if (key === "SPACE") {
-            if (currentName && currentName.length < MAX_NAME_CHARS) currentName += " ";
-          } else if (key === "ENTER") {
-            if (btnConfirmNombre && !btnConfirmNombre.disabled) btnConfirmNombre.click();
-            return;
-          } else {
-            if (currentName.length >= MAX_NAME_CHARS) return;
-            currentName += key;
-          }
-
-          updateNombreDisplay();
-          updateNombreConfirmState();
-          resetInactivityTimer();
-        });
+    // Botones menú
+    (document.querySelectorAll('[data-view-target]')||[]).forEach(function(btn){
+      btn.addEventListener('click',function(){ const target=btn.getAttribute('data-view-target'); if(!target) return;
+        if(target==='view-presencial') resetRutForm(); else if(target==='view-cell') resetCellForm(); else if(target==='view-name') resetNombre();
+        showView(target);
       });
-    }
-    updateNombreDisplay();
-    updateNombreConfirmState();
+    });
+    // Hint aleatorio en menú
+    setInterval(function(){
+      if (activeViewId!=='view-menu') return;
+      const arr = Array.from(document.querySelectorAll('[data-view-target]')); if(!arr.length) return;
+      const btn = arr[Math.floor(Math.random()*arr.length)];
+      btn.classList.add('option--hint'); setTimeout(()=>btn.classList.remove('option--hint'),900);
+    },5000);
 
-    if (btnConfirmNombre) {
-      btnConfirmNombre.addEventListener("click", async function () {
-        const nombre = (currentName || "").trim();
-        if (nombre.length < 3) {
-          resetInactivityTimer();
-          return;
-        }
-
-        clearInactivityTimer();
-        const ticket = await enviarTurno("NOMBRE", nombre);
-        if (!ticket) {
-          console.error("[turnolite] No se pudo registrar el turno solo con nombre vía API.");
-          resetInactivityTimer();
-          return;
-        }
-
-        console.log("Turno registrado solo con nombre (API):", ticket);
-        showTurnoModal();
-      });
-    }
-
-    if (btnVolverName) {
-      btnVolverName.addEventListener("click", function () {
-        resetNombre();
-        showView('view-menu');
-      });
-    }
-
-    // -------- Vista: Celular --------
-    function resetCellForm() {
-      if (cellInput) cellInput.value = "";
-      if (cellError) cellError.textContent = "";
-      if (btnConfirmCell) {
-        btnConfirmCell.disabled = true;
-        btnConfirmCell.classList.add("btn-turn--disabled");
-        btnConfirmCell.classList.remove("btn-turn--pulse");
-      }
-    }
-
-    function isValidChileMobile(value) {
-      const digits = sanitizePhone(value);
-      return digits.length === MAX_CELL_DIGITS;
-    }
-
-    function updateCellConfirmState() {
-      if (!btnConfirmCell || !cellInput) return;
-      const value = cellInput.value || "";
-      const isValid = isValidChileMobile(value);
-      if (isValid) {
-        btnConfirmCell.disabled = false;
-        btnConfirmCell.classList.remove("btn-turn--disabled");
-        btnConfirmCell.classList.add("btn-turn--pulse");
-      } else {
-        btnConfirmCell.disabled = true;
-        btnConfirmCell.classList.add("btn-turn--disabled");
-        btnConfirmCell.classList.remove("btn-turn--pulse");
-      }
-    }
-
-    function showCellError(message) {
-      if (cellError) cellError.textContent = message || "";
-    }
-
-    if (numericKeys && numericKeys.length && cellInput) {
-      numericKeys.forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          const key = btn.getAttribute("data-key");
-          if (!key) return;
-
-          let current = cellInput.value || "";
-          if (key === "BACKSPACE") {
-            current = current.slice(0, -1);
-          } else if (key === "CLEAR") {
-            current = "";
-          } else {
-            const digits = sanitizePhone(current);
-            if (digits.length >= MAX_CELL_DIGITS) return;
-            current += key;
-          }
-
-          cellInput.value = current;
-          updateCellConfirmState();
-          showCellError("");
-          resetInactivityTimer();
-        });
-      });
-    }
-
-    if (btnConfirmCell && cellInput) {
-      btnConfirmCell.addEventListener("click", async function () {
-        const valor = cellInput.value || "";
-        if (!isValidChileMobile(valor)) {
-          showCellError("Número de celular inválido. Debe tener 9 dígitos.");
-          return;
-        }
-        const digits = sanitizePhone(valor);
-
-        clearInactivityTimer();
-        const ticket = await enviarTurno("CELULAR", digits);
-        if (!ticket) {
-          console.error("[turnolite] No se pudo registrar el turno con celular vía API.");
-          resetInactivityTimer();
-          return;
-        }
-
-        console.log("Turno registrado con celular (API):", ticket);
-        showTurnoModal();
-      });
-    }
-
-    if (btnVolverCell) {
-      btnVolverCell.addEventListener("click", function () {
-        resetCellForm();
-        showView('view-menu');
-      });
-    }
-
-    // -------- Vista: RUT presencial (numérico) --------
-    function formatRutDisplay(digits) {
-      if (!digits) return "";
-      const rev = digits.split("").reverse();
-      const withDots = [];
-      for (let i = 0; i < rev.length; i++) {
-        withDots.push(rev[i]);
-        if ((i + 1) % 3 === 0 && i + 1 < rev.length) {
-          withDots.push(".");
-        }
-      }
-      return withDots.reverse().join("");
-    }
-
-    function renderRut() {
-      if (rutInput) rutInput.value = formatRutDisplay(rutDigits);
-      updateRutConfirmState();
-    }
-
-    function resetRutForm() {
-      rutDigits = "";
-      if (rutError) rutError.textContent = "";
-      renderRut();
-    }
-
-    function updateRutConfirmState() {
-      if (!btnConfirmRut) return;
-      const len = (rutDigits || "").length;
-      const enabled = len >= 7;
-
-      if (enabled) {
-        btnConfirmRut.disabled = false;
-        btnConfirmRut.classList.remove("btn-turn--disabled");
-      } else {
-        btnConfirmRut.disabled = true;
-        btnConfirmRut.classList.add("btn-turn--disabled");
-      }
-
-      if (len === MAX_RUT_DIGITS) {
-        btnConfirmRut.classList.add("btn-turn--pulse");
-      } else {
-        btnConfirmRut.classList.remove("btn-turn--pulse");
-      }
-    }
-
-    function showRutError(message) {
-      if (rutError) rutError.textContent = message || "";
-    }
-
-    if (rutKeys && rutKeys.length) {
-      rutKeys.forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          const key = btn.getAttribute("data-key");
-          if (!key) return;
-
-          if (key === "BACKSPACE") {
-            rutDigits = rutDigits.slice(0, -1);
-          } else if (key === "CLEAR") {
-            rutDigits = "";
-          } else if (/^\d$/.test(key)) {
-            if (rutDigits.length < MAX_RUT_DIGITS) {
-              rutDigits += key;
-            }
-          }
-
-          renderRut();
-          showRutError("");
-          resetInactivityTimer();
-        });
-      });
-    }
-
-    if (btnConfirmRut) {
-      btnConfirmRut.addEventListener("click", async function () {
-        const len = (rutDigits || "").length;
-        if (len < 7) {
-          showRutError("Ingresa al menos 7 dígitos de tu RUT.");
-          return;
-        }
-
-        clearInactivityTimer();
-        const ticket = await enviarTurno("PREFERENCIAL", rutDigits);
-        if (!ticket) {
-          console.error("[turnolite] No se pudo registrar el turno preferencial vía API.");
-          resetInactivityTimer();
-          return;
-        }
-
-        console.log("Turno presencial registrado con RUT numérico (API):", ticket);
-        showTurnoModal();
-      });
-    }
-
-    if (btnVolverRut) {
-      btnVolverRut.addEventListener("click", function () {
-        resetRutForm();
-        showView('view-menu');
-      });
-    }
-
-    // -------- Botones del menú principal (panel derecho) --------
-    if (viewButtons && viewButtons.length) {
-      viewButtons.forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          const target = btn.getAttribute("data-view-target");
-          if (!target) return;
-
-          if (target === 'view-presencial') {
-            resetRutForm();
-          } else if (target === 'view-cell') {
-            resetCellForm();
-          } else if (target === 'view-name') {
-            resetNombre();
-          }
-
-          showView(target);
-        });
-      });
-    }
-
-    // -------- Destacar opciones aleatoriamente cuando está el menú --------
-    if (viewButtons && viewButtons.length) {
-      setInterval(function () {
-        if (activeViewId !== 'view-menu') return;
-        const buttonsArr = Array.from(viewButtons);
-        if (!buttonsArr.length) return;
-        const btn = buttonsArr[Math.floor(Math.random() * buttonsArr.length)];
-        btn.classList.add("option--hint");
-        setTimeout(function () {
-          btn.classList.remove("option--hint");
-        }, 900);
-      }, 5000);
-    }
-
-    // Iniciar health-check periódico
+    // Arranque
     startHealthPolling();
-
-    console.log('[turnolite] interfaz lista (vista por panel derecho).');
   })();
   </script>
-  <!-- === Helpers de autenticación (Authorization: Bearer <deviceToken>) === -->
-	<script>
-	(function () {
-	  var KEY = 'turnoliteDeviceToken';
-
-	  function getToken() {
-		try { return window.__TURNOLITE_TOKEN__ || localStorage.getItem(KEY); }
-		catch { return null; }
-	  }
-
-	  function ensureToken() {
-		var t = getToken();
-		if (!t) {
-		  try { localStorage.removeItem(KEY); } catch {}
-		  location.replace('inicio.html');
-		  throw new Error('NO_DEVICE_TOKEN');
-		}
-		return t;
-	  }
-
-	  async function fetchWithAuth(url, options) {
-		options = options || {};
-		var t = ensureToken();
-		var headers = new Headers(options.headers || {});
-		if (!headers.has('Authorization')) headers.set('Authorization', 'Bearer ' + t);
-		// Si envías body y no especificaste content-type, asumimos JSON
-		if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-		return fetch(url, { ...options, headers });
-	  }
-
-	  async function postJsonAuth(url, body, extra) {
-		const opts = { method: 'POST', body: JSON.stringify(body || {}), ...(extra || {}) };
-		const res = await fetchWithAuth(url, opts);
-		let data = null;
-		try { data = await res.json(); } catch {}
-		if (!res.ok) throw new Error((data && data.error) || ('HTTP_' + res.status));
-		return data || {};
-	  }
-
-		// ANTES: (tenías un fetch directo a HEALTH_METRICS_URL sin Authorization)
-		// function reportHealthMetric(pingMs) { ... }
-
-		//
-		// DESPUÉS (si prefieres mantener el nombre antiguo en tu bloque):
-		//
-		function reportHealthMetric(pingMs) {
-		  // delega en el override que firma con Authorization
-		  return window.reportHealthMetric(pingMs);
-		}
-
-
-	  // --- OVERRIDE: enviarTurno → usa Authorization y payload mínimo ---
-	  window.enviarTurno = async function (tipo, valor) {
-		if (!window.API_URL) return null;
-
-		const payload = { tipo: String(tipo).toUpperCase() };
-		if (payload.tipo === 'NOMBRE')       payload.nombre  = valor;
-		else if (payload.tipo === 'CELULAR') payload.celular = valor;
-		else if (payload.tipo === 'RUT')     payload.rut     = valor;
-
-		try {
-		  const data = await postJsonAuth(window.API_URL, payload);
-		  return (data && data.turno) ? data.turno : null;
-		} catch (e) {
-		  console.error('[turnolite] Error API enviarTurno:', e && e.message);
-		  return null;
-		}
-	  };
-	})();
-	</script>
-
 </body>
 </html>
