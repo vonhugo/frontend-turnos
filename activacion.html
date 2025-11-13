@@ -46,7 +46,18 @@
     .badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800}
     .badge--ok{background:#eafaf1;color:#13824a;border:1px solid rgba(39,174,96,.35)}
     .badge--off{background:#fff3f2;color:#b03a2e;border:1px solid rgba(231,76,60,.35)}
-    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:nowrap;        /* evita que se vayan a segunda línea */
+      justify-content:flex-end;/* alineadas hacia la derecha de la celda */
+      align-items:center;
+    }
+
+    /* Opcional, para que el texto del botón no se corte en varias líneas */
+    .actions .btn{
+      white-space:nowrap;
+    }
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,Monaco,monospace}
     .copy{cursor:pointer;font-size:12px;color:#0f7fe5;font-weight:800;margin-left:8px}
     @media (max-width: 1024px){.grid{grid-template-columns:1fr} .token-pill input{min-width:200px}}
@@ -274,15 +285,19 @@
           return;
         }
         for (const it of items) {
+          const activated   = fmtDT(it.activatedAt   || it.activated_at);
+          const deactivated = fmtDT(it.deactivatedAt || it.deactivated_at);
+          const lastSeen    = fmtDT(it.lastSeenAt    || it.last_seen_at);
+
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td class="mono">${it.kioskoId || it.kiosko_id || ''}</td>
             <td class="mono">${it.clienteId || it.cliente_id || ''}</td>
             <td class="mono">${it.sucursalId || it.sucursal_id || ''}</td>
             <td>${renderStatus(it.status || it.state)}</td>
-            <td>${fmtDT(it.activatedAt || it.activated_at)}</td>
-            <td>${fmtDT(it.deactivatedAt || it.deactivated_at)}</td>
-            <td>${fmtDT(it.lastSeenAt || it.last_seen_at)}</td>
+            <td>${activated   || 'NA'}</td>
+            <td>${deactivated || 'NA'}</td>
+            <td>${lastSeen    || 'NA'}</td>
             <td class="actions">
               <button class="btn btn--ghost" data-act="gen" data-k="${it.kioskoId || it.kiosko_id}">Generar token</button>
               <button class="btn btn--primary" data-act="off" data-k="${it.kioskoId || it.kiosko_id}">Desactivar</button>
