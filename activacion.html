@@ -38,9 +38,33 @@
     .err{display:none;margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--err-bg);border:1px solid var(--err-bd);color:var(--err-tx);font-weight:700}
     .ok{display:none;margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(39,174,96,.1);
       border:1px solid rgba(39,174,96,.35);color:#13824a;font-weight:700}
-    .table{width:100%;border-collapse:separate;border-spacing:0 10px}
-    .table th{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#2b3f57;text-align:left;padding:0 10px}
-    .table td{background:#f7fbff;color:#0a1f35;padding:12px 10px;border-top:1px solid #e1ecf7;border-bottom:1px solid #e1ecf7}
+    .table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0 10px;
+    }
+
+    .table th{
+      font-size:12px;                  /* antes 13px */
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      color:#2b3f57;
+      text-align:left;
+      padding:0 10px;
+    }
+
+    .table td{
+      background:#f7fbff;
+      color:#0a1f35;
+      padding:10px 8px;                /* un poco menos alto y ancho */
+      border-top:1px solid #e1ecf7;
+      border-bottom:1px solid #e1ecf7;
+      font-size:12px;                  /* reduce tamaño de la letra del listado */
+    }
+    .dt-cell{
+      font-size:11px;                  /* aún más pequeño para fechas */
+      white-space:nowrap;              /* evita salto de línea en la fecha/hora */
+    }
     .table tr td:first-child{border-left:1px solid #e1ecf7;border-top-left-radius:12px;border-bottom-left-radius:12px}
     .table tr td:last-child{border-right:1px solid #e1ecf7;border-top-right-radius:12px;border-bottom-right-radius:12px}
     .badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800}
@@ -160,13 +184,20 @@
     // ===== Helpers =====
     const $ = sel => document.querySelector(sel);
     const $$ = sel => Array.from(document.querySelectorAll(sel));
-    const fmtDT = iso => {
+    const fmtDTShort = iso => {
       if (!iso) return '';
       try {
-        return new Date(iso).toLocaleString('es-CL', {
-          day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'
-        }).replace(',', '');
-      } catch { return iso; }
+        const d  = new Date(iso);
+        const dd = String(d.getDate()).padStart(2,'0');
+        const mm = String(d.getMonth() + 1).padStart(2,'0');
+        const hh = String(d.getHours()).padStart(2,'0');
+        const mi = String(d.getMinutes()).padStart(2,'0');
+
+        // Formato compacto: 13-11 18:26
+        return `${dd}-${mm} ${hh}:${mi}`;
+      } catch {
+        return '';
+      }
     };
     function getAdminToken(){ try { return localStorage.getItem(ADMIN_TOKEN_KEY) || ''; } catch { return ''; } }
     function setAdminToken(v){ try { localStorage.setItem(ADMIN_TOKEN_KEY, v||''); } catch {} }
@@ -285,9 +316,9 @@
           return;
         }
         for (const it of items) {
-          const activated   = fmtDT(it.activatedAt   || it.activated_at);
-          const deactivated = fmtDT(it.deactivatedAt || it.deactivated_at);
-          const lastSeen    = fmtDT(it.lastSeenAt    || it.last_seen_at);
+          const activated   = fmtDTShort(it.activatedAt   || it.activated_at);
+          const deactivated = fmtDTShort(it.deactivatedAt || it.deactivated_at);
+          const lastSeen    = fmtDTShort(it.lastSeenAt    || it.last_seen_at);
 
           const tr = document.createElement('tr');
           tr.innerHTML = `
@@ -295,9 +326,9 @@
             <td class="mono">${it.clienteId || it.cliente_id || ''}</td>
             <td class="mono">${it.sucursalId || it.sucursal_id || ''}</td>
             <td>${renderStatus(it.status || it.state)}</td>
-            <td>${activated   || 'NA'}</td>
-            <td>${deactivated || 'NA'}</td>
-            <td>${lastSeen    || 'NA'}</td>
+            <td class="dt-cell">${activated   || 'NA'}</td>
+            <td class="dt-cell">${deactivated || 'NA'}</td>
+            <td class="dt-cell">${lastSeen    || 'NA'}</td>
             <td class="actions">
               <button class="btn btn--ghost" data-act="gen" data-k="${it.kioskoId || it.kiosko_id}">Generar token</button>
               <button class="btn btn--primary" data-act="off" data-k="${it.kioskoId || it.kiosko_id}">Desactivar</button>
