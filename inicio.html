@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Activar kiosko • TurnoLite</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; background:#0b0c10; color:#e9eef3; }
+    .wrap { max-width: 460px; margin: 8vh auto; padding: 24px; background: #121319; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    p  { margin: 0 0 14px; opacity:.9; }
+    input[type=text]{
+      width: 100%; padding: 14px 12px; font-size: 18px; border-radius: 10px;
+      border: 1px solid #2a2d38; outline: none; background: #0b0c10; color: #fff; letter-spacing: .08em; text-transform: uppercase;
+    }
+    button{
+      width: 100%; padding: 14px 12px; font-size: 18px; border-radius: 10px; border: 0; cursor: pointer;
+      background: #29a37e; color: #0b0c10; font-weight: 700; margin-top: 12px;
+    }
+    button:disabled{ opacity: .6; cursor: not-allowed; }
+    .hint{ font-size: 12px; opacity:.75; margin-top:8px }
+    .err { color: #ff8b8b; margin-top: 10px; display: none; }
+    .ok  { color: #86f7c2; margin-top: 10px; display: none; }
+    .center { text-align:center; margin-top:12px; }
+    .small { font-size:13px; opacity:.85; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Activar kiosko</h1>
+    <p>Ingresa el <strong>código de activación</strong> que te entregamos (8–10 caracteres).</p>
+
+    <input id="token" type="text" inputmode="latin" autocomplete="one-time-code" placeholder="ABCD2345" maxlength="12" />
+    <button id="btn-activate">Activar</button>
+
+    <div id="msg-err" class="err"></div>
+    <div id="msg-ok"  class="ok">Activación correcta. Validando el dispositivo…</div>
+
+    <div class="center small">
+      <div id="validando" style="display:none;">Validando credencial existente…</div>
+      <div class="hint">Si ya activaste este tablet antes, te redirigiremos automáticamente al sistema.</div>
+    </div>
+  </div>
+
+  <script>
+    // ====== Config ======
+    const API_BASE = 'https://api-turnos-mamq.onrender.com';
+    const DEVICE_TOKEN_KEY = 'turnoliteDeviceToken';
+
+    // ====== Helpers de storage ======
+    const getDeviceToken   = () => { try { return localStorage.getItem(DEVICE_TOKEN_KEY) } catch { return null } };
+    const setDeviceToken   = (t)  => { try { localStorage.setItem(DEVICE_TOKEN_KEY, t) } catch {} };
+    const clearDeviceToken = ()   => { try { localStorage.removeItem(DEVICE_TOKEN_KEY) } catch {} };
+
+    // ====== Validación "suave" del token (contra un endpoint protegido) ======
+    async function validateToken(deviceToken) {
+      try {
+        const res = await fetch(API_BASE + '/api/health-metric', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + deviceToken },
+          body: JSON.stringify({
+            pingMs: 1,
+            healthUrl: API_BASE + '/api/health',
+            page: location.href,
+            userAgent: navigator.userAgent,
+            screenWidth:  window.screen.width,
+            screenHeight: window.screen.height,
+            timestamp: new Date().toISOString(),
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || null
+          })
+        });
+        if (res.status === 200) return true;        // OK (guardó o al menos aceptó)
+        if (res.status === 401 || res.status === 403) return false; // inválido / desactivado
+        // Otros 2xx también se aceptan para esta validación
+        if (String(res.status).startsWith('2')) return true;
+        return false;
+      } catch {
+        // Si estamos sin red, no podemos validar; consideramos "no válido" para evitar pasar a producción sin conexión
+        return false;
+      }
+    }
+
+    // ====== Activación con token humano ======
+    async function activateWithToken(rawToken) {
+      const elErr = document.getElementById('msg-err');
+      const elOk  = document.getElementById('msg-ok');
+      elErr.style.display = 'none'; elOk.style.display = 'none';
+
+      const token = String(rawToken || '').trim().toUpperCase();
+      if (!token) {
+        elErr.textContent = 'Debes ingresar un código.'; elErr.style.display = 'block'; return;
+      }
+
+      const btn = document.getElementById('btn-activate');
+      btn.disabled = true;
+
+      try {
+        const resp = await fetch(API_BASE + '/api/kiosk/activate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok || !data.deviceToken) {
+          throw new Error(data?.error || 'No fue posible activar (token inválido, usado o expirado).');
+        }
+
+        setDeviceToken(data.deviceToken);
+        elOk.style.display = 'block';
+
+        // Validación rápida post-activación
+        const ok = await validateToken(data.deviceToken);
+        if (!ok) throw new Error('La credencial no pasó validación. Intenta nuevamente.');
+
+        // Redirección al sistema de turnos
+        // Opción recomendada: GET limpia a index.html (el token va en localStorage)
+        window.location.replace('index.html');
+
+        // Si insistes en un POST simbólico (sólo para "marcar" navegación):
+        // postToIndex();
+
+      } catch (e) {
+        clearDeviceToken();
+        elErr.textContent = e.message || 'Error de activación.';
+        elErr.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // ====== POST "simbólico" a index.html (no transmite datos al JS de un HTML estático) ======
+    function postToIndex() {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'index.html';
+      // Sólo un marcador de navegación (index.html estático no podrá leer este body)
+      const input = document.createElement('input');
+      input.type  = 'hidden';
+      input.name  = 'origin';
+      input.value = 'inicio';
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
+    }
+
+    // ====== Boot: si ya hay credencial, intentamos validarla y pasar ======
+    (async function boot() {
+      const token = getDeviceToken();
+      if (token) {
+        document.getElementById('validando').style.display = 'block';
+        const ok = await validateToken(token);
+        if (ok) {
+          window.location.replace('index.html');
+          return;
+        }
+        clearDeviceToken();
+        document.getElementById('validando').style.display = 'none';
+      }
+      // wire up UI
+      document.getElementById('btn-activate').onclick = () => activateWithToken(document.getElementById('token').value);
+      document.getElementById('token').onkeydown = (ev) => { if (ev.key === 'Enter') activateWithToken(ev.target.value); };
+      document.getElementById('token').focus();
+    })();
+  </script>
+</body>
+</html>
