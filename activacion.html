@@ -45,7 +45,7 @@
     }
 
     .table th{
-      font-size:12px;                  /* antes 13px */
+      font-size:12px;
       text-transform:uppercase;
       letter-spacing:.08em;
       color:#2b3f57;
@@ -56,14 +56,14 @@
     .table td{
       background:#f7fbff;
       color:#0a1f35;
-      padding:10px 8px;                /* un poco menos alto y ancho */
+      padding:10px 8px;
       border-top:1px solid #e1ecf7;
       border-bottom:1px solid #e1ecf7;
-      font-size:12px;                  /* reduce tamaño de la letra del listado */
+      font-size:12px;
     }
     .dt-cell{
-      font-size:11px;                  /* aún más pequeño para fechas */
-      white-space:nowrap;              /* evita salto de línea en la fecha/hora */
+      font-size:11px;
+      white-space:nowrap;
     }
     .table tr td:first-child{border-left:1px solid #e1ecf7;border-top-left-radius:12px;border-bottom-left-radius:12px}
     .table tr td:last-child{border-right:1px solid #e1ecf7;border-top-right-radius:12px;border-bottom-right-radius:12px}
@@ -73,12 +73,10 @@
     .actions{
       display:flex;
       gap:8px;
-      flex-wrap:nowrap;        /* evita que se vayan a segunda línea */
-      justify-content:flex-end;/* alineadas hacia la derecha de la celda */
+      flex-wrap:nowrap;
+      justify-content:flex-end;
       align-items:center;
     }
-
-    /* Opcional, para que el texto del botón no se corte en varias líneas */
     .actions .btn{
       white-space:nowrap;
     }
@@ -260,7 +258,7 @@
         if (data.token) lines.push(`Token: <span class="mono">${data.token}</span> <span class="copy" data-copy="${data.token}">copiar</span>`);
         if (data.activationUrl) lines.push(`URL activación: <span class="mono">${data.activationUrl}</span> <span class="copy" data-copy="${data.activationUrl}">copiar</span>`);
         if (data.deactivationUrl) lines.push(`URL desactivación: <span class="mono">${data.deactivationUrl}</span> <span class="copy" data-copy="${data.deactivationUrl}">copiar</span>`);
-        if (data.expiresAt) lines.push(`Expira: ${fmtDT(data.expiresAt)}`);
+        if (data.expiresAt) lines.push(`Expira: ${fmtDTShort(data.expiresAt)}`);
 
         $('#req-ok').innerHTML = lines.join('<br>');
         $('#req-ok').style.display = 'block';
@@ -320,18 +318,46 @@
           const deactivated = fmtDTShort(it.deactivatedAt || it.deactivated_at);
           const lastSeen    = fmtDTShort(it.lastSeenAt    || it.last_seen_at);
 
+          const statusRaw  = it.status || it.state || '';
+          const statusNorm = String(statusRaw).toLowerCase();
+
+          let canGen = false;
+          let canOff = false;
+
+          // Reglas:
+          // - NUEVO: sólo Generar token
+          // - ACTIVO: sólo Desactivar
+          // - INACTIVO (u otros): ambos deshabilitados
+          if (statusNorm === 'nuevo' || statusNorm === 'new') {
+            canGen = true;
+            canOff = false;
+          } else if (statusNorm === 'activo' || statusNorm === 'active' || statusNorm === 'on') {
+            canGen = false;
+            canOff = true;
+          } else if (statusNorm === 'inactivo' || statusNorm === 'inactive' || statusNorm === 'off') {
+            canGen = false;
+            canOff = false;
+          }
+
+          const genDisabledAttr = canGen ? '' : 'disabled aria-disabled="true"';
+          const offDisabledAttr = canOff ? '' : 'disabled aria-disabled="true"';
+
+          const kioskoIdCell = it.kioskoId || it.kiosko_id || '';
+          const clienteCell  = it.clienteId || it.cliente_id || '';
+          const sucursalCell = it.sucursalId || it.sucursal_id || '';
+
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td class="mono">${it.kioskoId || it.kiosko_id || ''}</td>
-            <td class="mono">${it.clienteId || it.cliente_id || ''}</td>
-            <td class="mono">${it.sucursalId || it.sucursal_id || ''}</td>
-            <td>${renderStatus(it.status || it.state)}</td>
+            <td class="mono">${kioskoIdCell}</td>
+            <td class="mono">${clienteCell}</td>
+            <td class="mono">${sucursalCell}</td>
+            <td>${renderStatus(statusRaw)}</td>
             <td class="dt-cell">${activated   || 'NA'}</td>
             <td class="dt-cell">${deactivated || 'NA'}</td>
             <td class="dt-cell">${lastSeen    || 'NA'}</td>
             <td class="actions">
-              <button class="btn btn--ghost" data-act="gen" data-k="${it.kioskoId || it.kiosko_id}">Generar token</button>
-              <button class="btn btn--primary" data-act="off" data-k="${it.kioskoId || it.kiosko_id}">Desactivar</button>
+              <button class="btn btn--ghost" data-act="gen" data-k="${kioskoIdCell}" ${genDisabledAttr}>Generar token</button>
+              <button class="btn btn--primary" data-act="off" data-k="${kioskoIdCell}" ${offDisabledAttr}>Desactivar</button>
             </td>`;
           tbody.appendChild(tr);
         }
@@ -339,7 +365,7 @@
         // Acciones de la tabla
         tbody.onclick = async (ev) => {
           const b = ev.target.closest('button[data-act]');
-          if (!b) return;
+          if (!b || b.disabled) return;
           const act = b.getAttribute('data-act');
           const k = b.getAttribute('data-k');
           if (!k) return;
@@ -386,6 +412,9 @@
       const ok = String(s||'').toLowerCase();
       if (ok === 'active' || ok === 'activo' || ok === 'on') {
         return `<span class="badge badge--ok">ACTIVO</span>`;
+      }
+      if (ok === 'new' || ok === 'nuevo') {
+        return `<span class="badge badge--off">NUEVO</span>`;
       }
       return `<span class="badge badge--off">INACTIVO</span>`;
     }
